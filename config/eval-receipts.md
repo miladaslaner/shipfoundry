@@ -30,7 +30,7 @@ version instead would have made the file assert runs that never happened.
 
 | Skill | Version evaluated | Date | Scenarios | Failed |
 |---|---|---|---|---|
-| jarvis-agency-orchestrate | 0.16.0 | — | — | — |
+| jarvis-agency-orchestrate | 0.16.1 | 2026-07-29 | 42 | 11 |
 | jarvis-agency-jira-contract | 0.14.0 | — | — | — |
 | jarvis-agency-intake | 0.9.1 | — | — | — |
 | jarvis-agency-verify-artifact | 0.3.0 | — | — | — |
@@ -77,10 +77,10 @@ run actually happens.
 | jarvis-agency-build-stream | 0.1.0 | 2026-07-29 | 8 | 3 |
 | jarvis-agency-build-web | 0.1.5 | 2026-07-29 | 9 | 4 |
 | jarvis-agency-hydrate | 0.1.4 | 2026-07-29 | 6 | 2 |
-| jarvis-agency-onboard | 0.3.0 | 2026-07-29 | 10 | 3 |
+| jarvis-agency-onboard | 0.3.1 | 2026-07-29 | 10 | 0 |
 | jarvis-agency-retro | 0.1.3 | 2026-07-29 | 8 | 1 |
 | jarvis-agency-run-tests | 0.3.0 | 2026-07-29 | 12 | 2 |
 | jarvis-agency-triage-bug | 0.2.1 | 2026-07-29 | 6 | 0 |
 | jarvis-agency-verify-detection | 0.1.0 | 2026-07-29 | 8 | 0 |
 | jarvis-agency-watch-cost | 0.2.1 | 2026-07-29 | 7 | 0 |
-| jarvis-example | 1.0.0 | 2026-07-29 | 5 | 1 |
+| jarvis-example | 1.0.2 | 2026-07-29 | 5 | 3 |
