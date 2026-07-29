@@ -2,7 +2,7 @@
 # shipfoundry pre-push hook — refuses a direct push to the protected branch.
 # Install with ./install-hooks.sh (symlinks this into .git/hooks/pre-push).
 # Stand-in for server-side branch protection (unavailable on private repos without GitHub Pro):
-# encourages the branch -> MR -> CI -> merge flow the docs describe.
+# encourages the branch -> PR -> CI -> merge flow the docs describe.
 # Override a single push with: git push --no-verify
 set -uo pipefail
 
@@ -13,7 +13,7 @@ PROTECTED="main"
 while read -r _local_ref _local_oid remote_ref _remote_oid; do
   if [ "$remote_ref" = "refs/heads/$PROTECTED" ]; then
     echo "[pre-push] BLOCKED — direct push to '$PROTECTED' is disabled." >&2
-    echo "[pre-push] Use the branch -> MR flow: git switch -c <type>/<slug>, push that, open a PR." >&2
+    echo "[pre-push] Use the branch -> PR flow: git switch -c <type>/<slug>, push that, open a PR." >&2
     echo "[pre-push] Override this one push with: git push --no-verify" >&2
     exit 1
   fi
