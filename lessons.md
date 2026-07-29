@@ -92,13 +92,13 @@ the flags. (3) Prefer flags that state their own clearing condition ("UNVALIDATE
 concurrent multi-story wave runs") over bare labels — the 2026-07-05 reconciliation rewrote the
 surviving flags in that form.
 
-### 2026-07-07 — A stacked platform MR merged into its stale base, silently missing `main`
+### 2026-07-07 — A stacked platform PR merged into its stale base, silently missing `main`
 
 **What happened.** A five-producer expansion PR (call it **B**) was opened stacked on an earlier PR's branch **A** (`feat/producer-expansion-stream`) so B's diff showed only the new waves. Both were squash-merged within seconds of each other — but A's branch was not deleted first, so GitHub never retargeted B's base to `main`. B "merged" green into the stale feature branch; `main` silently lacked five skills the maintainer believed had landed. Caught only because the next session pulled `main` and found the producers absent; recovered by cherry-picking B's squash commit onto `main` (this entry ships in that re-land PR).
 
-**Root cause.** GitHub only auto-retargets a stacked PR's base on branch *deletion*, not on merge. The agency's orchestrator documents exactly this trap for its own story merge trains (the GA-row stacked-PR rule: merge-and-delete bottom-up, or explicitly retarget before merging) — but the *platform repo's* human MR flow had no equivalent rule, so the same failure bit the maintainer instead of the agents.
+**Root cause.** GitHub only auto-retargets a stacked PR's base on branch *deletion*, not on merge. The agency's orchestrator documents exactly this trap for its own story merge trains (the GA-row stacked-PR rule: merge-and-delete bottom-up, or explicitly retarget before merging) — but the *platform repo's* human PR flow had no equivalent rule, so the same failure bit the maintainer instead of the agents.
 
-**Rule.** In this repo, stack MRs only when necessary; when you do, merge bottom-up **and delete each branch on merge** (or `gh pr edit <n> --base main` before merging the upper PR), and after any multi-MR landing verify `git log origin/main` actually contains every expected change before building on it. A merged-PR state on GitHub is not evidence the change reached `main`.
+**Rule.** In this repo, stack PRs only when necessary; when you do, merge bottom-up **and delete each branch on merge** (or `gh pr edit <n> --base main` before merging the upper PR), and after any multi-PR landing verify `git log origin/main` actually contains every expected change before building on it. A merged-PR state on GitHub is not evidence the change reached `main`.
 
 **Mechanically checkable → partially.** The post-merge verification is the checkable half: after landing a stacked train, `git ls-tree origin/main` for the expected new paths. A CI check cannot see the maintainer's intent (which PRs form a train), so the merge-and-delete discipline stays memory-enforced here — same status as the orchestrator's rule, which is at least skill-encoded for agency runs.
 
