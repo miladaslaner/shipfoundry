@@ -18,8 +18,10 @@ shipfoundry's answer is enforced discipline, not good intentions:
   pass. Identity collisions are detected mechanically, not promised.
 - **36 executable checks** gate the platform itself (`lint-platform.sh`). Conventions that are
   merely written down drift; these exit non-zero.
-- **Evaluations are merge gates**, not a nice-to-have. Every skill ships a behavioural baseline;
-  a skill whose behaviour changed without a recorded eval run is flagged.
+- **Evaluations are recorded, not optional.** Every skill ships a behavioural baseline, and a skill
+  whose behaviour changed without a recorded eval run is flagged by the lint. The run itself makes
+  live model calls, so it happens on a maintainer machine rather than in CI — the receipt is the
+  enforceable part, not the run.
 - **A human signs GA. Always.** No agent can move work past the release gate — the ceiling is
   behavioural and holds even in unattended runs.
 - **Intent lives in your vault, not in an agent's context.** A decision the founder never
