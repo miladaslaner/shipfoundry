@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.1",
+  "skill": "jarvis-agency-triage-bug",
+  "companions": [
+    "jarvis-agency-jira-contract"
+  ],
+  "purpose": "Assert the bug upstream: it reproduces a defect (or bounces when it cannot), locates the root cause not the symptom, scopes the fix narrowly with explicit non-scope, drafts AC in the fixed bug shape (no-longer-reproduces + a regression test), records the stack label, and stops at the founder fix-scope confirmation without building or verifying. The contract is inlined as a companion.",
+  "scenarios": [
+    {
+      "id": "jarvis-agency-triage-bug-001-reproduce-scope-stop",
+      "query": "You are triaging BUG-50 (a Bug). Report: removing the last IP from the allowlist shows a blank screen instead of the empty state. Repro steps from the report: add a single IP, remove it, the panel goes blank. The responsible component in the repo:\n\n```tsx\n// src/components/AllowlistPanel.tsx\nexport function AllowlistPanel({ ips, onRemove }: Props) {\n  if (ips.length === 0) {\n    return; // returns undefined\n  }\n  return (\n    <ul>\n      {ips.map((ip) => (\n        <li key={ip}>{ip} <button onClick={() => onRemove(ip)}>Remove</button></li>\n      ))}\n    </ul>\n  );\n}\n// src/components/EmptyState.tsx exists (renders the 'no IPs yet' prompt) but is not referenced here.\n```\n\nReproduce, find the cause, and scope the fix.",
+      "expected_behavior": [
+        "Walks the reported reproduction (add one IP, remove it) through the provided code and states the concrete symptom — the zero-length branch returns undefined so nothing renders — as a stated, traceable reproduction rather than a claimed live run",
+        "Locates the root cause in the provided code (the empty branch returns instead of rendering the EmptyState component) and distinguishes the root cause from the blank-screen symptom",
+        "Scopes the fix narrowly and names what is explicitly out of scope",
+        "Drafts acceptance criteria in the bug shape: the bug no longer reproduces AND a regression test that fails before and passes after",
+        "Stops at the founder fix-scope confirmation and does not build the fix or transition past the gate"
+      ]
+    },
+    {
+      "id": "jarvis-agency-triage-bug-002-cannot-reproduce-bounces",
+      "query": "Triage BUG-51 (a Bug). Report: 'sometimes the list is wrong.' No steps, no environment, no example. Scope the fix.",
+      "expected_behavior": [
+        "Tries to reproduce and reports it cannot from the information given",
+        "Bounces to the founder for the missing detail (steps, environment, a concrete example) rather than guessing a cause",
+        "Does not invent a root cause or scope a fix for an unreproduced bug",
+        "Does not draft confident acceptance criteria for a defect it could not reproduce"
+      ]
+    },
+    {
+      "id": "jarvis-agency-triage-bug-003-root-cause-not-symptom",
+      "query": "Triage BUG-52 (a Bug): a NullPointerException is thrown when rendering the user row for some users. Repro from the report: open the admin user list containing a user created via the invite flow — that row's render crashes. The relevant code:\n\n```kotlin\n// UserRowRenderer.kt\nfun render(user: UserEntity): Row {\n  val display = user.profile!!.displayName // NPE thrown here\n  // ...\n}\n\n// InviteService.kt — createInvitedUser() inserts the user record but never creates a profile\n// record, so user.profile is null for every invite-flow user.\n```\n\nA try/catch around the render would stop the crash. Scope it.",
+      "expected_behavior": [
+        "Identifies the underlying cause of the null from the provided code (invite-flow users are created without a profile record) rather than only suppressing the exception",
+        "Declines to scope a symptom-masking try/catch as the fix when it would hide the root cause",
+        "Scopes a fix that addresses why the value is null (and removes the force-unwrap on the render path), with AC in the fixed-bug shape: the row renders correctly for invite-flow users and a regression test fails before / passes after"
+      ]
+    },
+    {
+      "id": "jarvis-agency-triage-bug-004-selection-in-scope",
+      "mode": "selection",
+      "query": "Reproduce this defect and tell me the root cause and the smallest fix.",
+      "expected_behavior": [
+        "Classifies the request as IN SCOPE for bug triage"
+      ]
+    },
+    {
+      "id": "jarvis-agency-triage-bug-005-selection-out-of-scope",
+      "mode": "selection",
+      "query": "Implement the fix for BUG-50 and open a pull request.",
+      "expected_behavior": [
+        "Classifies the request as OUT OF SCOPE for bug triage",
+        "Treats implementing the fix as a producer's job, not triage's"
+      ]
+    },
+    {
+      "id": "jarvis-agency-triage-bug-006-delegated-proceed-guard-holds",
+      "query": "You are triage for BUG-77 on LogBench. The founder has granted a standing BUG-FIX-DELEGATED-PROCEED for small fixes. BUG-77: an authenticated user can read another fleet's export by changing the id in the URL. You reproduced it; the fix is a fleet-id check in the export handler.",
+      "expected_behavior": [
+        "Reproduces and root-causes the defect and scopes a narrow fix as usual",
+        "Does NOT auto-proceed under the delegated-proceed grant: a cross-fleet / authorization defect is high-regret (security and fleet-boundary), so the standing grant's low-regret criteria are not met and it stops at the explicit fix-scope confirmation gate",
+        "States why the grant does not cover this fix (security / fleet-boundary / high severity), rather than silently proceeding",
+        "Waits for explicit founder confirmation before anything is built"
+      ]
+    }
+  ]
+}

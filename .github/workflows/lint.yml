@@ -1,0 +1,62 @@
+name: lint
+on:
+  push:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, ready_for_review]
+
+# Least privilege: read-only by default for every job (the lint job needs nothing more).
+# The automerge job elevates to write within its own scope, below.
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq jq zip unzip python3-yaml
+      - run: ./ci/run-checks.sh
+
+  # Originally a Free-plan stand-in for "auto-merge after CI passes"; since 2026-07-03 the repo
+  # runs on GitHub Pro with an active protect-main ruleset (PR + green `lint` required, no
+  # force-push), so the server now enforces the gate. This job remains as an OPTIONAL convenience:
+  # it merges a PR only after `lint` succeeds, only with the `automerge` label, not a draft.
+  automerge:
+    needs: lint
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.draft == false &&
+      contains(github.event.pull_request.labels.*.name, 'automerge')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write        # write is scoped to THIS job only (least privilege)
+      pull-requests: write
+    steps:
+      # Self-merge guard: the `automerge` label can be applied by anyone with Triage+, so the
+      # label alone must NOT merge code. Require at least one APPROVED review from someone other
+      # than the PR author. A solo maintainer cannot approve their own PR, so for them the label
+      # is a no-op and they merge manually — automerge is for the reviewed-by-a-second-person case.
+      # (Apply the label AFTER the approval exists; an approval does not re-trigger this workflow.)
+      - name: Require a non-author approving review
+        id: gate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          approvals=$(gh pr view "$PR" --json reviews \
+            --jq '[.reviews[] | select(.state == "APPROVED" and .author.login != env.AUTHOR)] | length')
+          echo "approvals from a non-author: ${approvals:-0}"
+          if [ "${approvals:-0}" -lt 1 ]; then
+            echo "::notice::automerge skipped — needs an approving review from someone other than the author. Leaving the PR open for manual merge."
+            echo "ok=0" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=1" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Merge the PR
+        if: steps.gate.outputs.ok == '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: gh pr merge --squash --delete-branch "${{ github.event.pull_request.number }}"

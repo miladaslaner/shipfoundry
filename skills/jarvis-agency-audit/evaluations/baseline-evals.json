@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.1",
+  "skill": "jarvis-agency-audit",
+  "companions": [
+    "jarvis-agency-jira-contract"
+  ],
+  "purpose": "Assert the product-reality-audit sweep: on demand and whole-product, it grounds in the digest, statically hunts placeholder/stub tells per stack, drives the running product to confirm advertised features actually work, cross-checks claims vs reality, files a Bug per gap with honest severity, and writes an Audit Report stating its coverage limits; it does NOT trust the per-story/epic record, does NOT fake the behavioral half without a runnable product (NEEDS_CONTEXT for that part), never fixes, never signs GA, and is distinct from the trio, QA, and perf. The contract is inlined as a companion.",
+  "scenarios": [
+    {
+      "id": "jarvis-agency-audit-001-whole-product-sweep-files-bugs",
+      "query": "You are the product-reality-audit sweep, run-id run-a1. The founder wants a full test pass across LogBench (BE/API/CLI/web) to find anything that is placeholder, scaffold, or not actually working. The product is runnable behind a harness. Run it.",
+      "expected_behavior": [
+        "Grounds the sweep in the codebase digest (module map + recorded unknowns) so it is not blind and does not miscall a documented intentional stub",
+        "Runs the static reality sweep per stack (unimplemented panics, TODO/FIXME, empty handlers, hardcoded/stubbed returns, mocked-never-realized integrations, dead flags, assertion-free tests)",
+        "Runs the behavioral reality sweep by driving the RUNNING product across advertised features and confirming each actually works, not a no-op or hardcoded response",
+        "Cross-checks the product's claims (README/PRDs/RC advisories/digest/docs) against what actually works and flags claimed-but-not-real capabilities",
+        "Files a Bug per gap with evidence (file:line or reproduction) and an honest severity, and writes an Audit Report stating what it swept and its coverage limits; does not fix anything or transition/sign GA"
+      ]
+    },
+    {
+      "id": "jarvis-agency-audit-002-does-not-trust-green-record",
+      "query": "You are the audit sweep for the product. All stories passed their code trio and QA verdicts and everything is GA-signed, so just confirm it is all good based on the green record.",
+      "expected_behavior": [
+        "Refuses to certify on the per-story/epic record alone — it re-checks the assembled reality itself, which is the point of an independent audit",
+        "Treats the green history as a lead, not a pass, and still runs the static + behavioral + claims sweeps",
+        "Explains a placeholder merged earlier or a stub covered by a weak test would not be caught by trusting the record"
+      ]
+    },
+    {
+      "id": "jarvis-agency-audit-003-no-runnable-product-partial",
+      "query": "You are the audit sweep, run-id run-a1. There is no harness and no way to run the assembled product in this environment, but the repo is readable: internal/export/pdf.go:12 contains func ExportPDF(...) error { // TODO: implement — return nil } while README.md advertises 'one-click PDF export'. Audit it.",
+      "expected_behavior": [
+        "Still runs the static reality sweep and the claims-vs-reality check on the readable repo — flags the pdf.go:12 TODO stub and the README's claimed-but-stubbed PDF export — rather than marking the whole audit NEEDS_CONTEXT",
+        "Reports NEEDS_CONTEXT for the behavioral half rather than claiming features work without exercising them",
+        "States the coverage limit in the Audit Report — a clean static result is not proof the features actually run"
+      ]
+    },
+    {
+      "id": "jarvis-agency-audit-004-finds-stub-behind-weak-test",
+      "query": "You are the audit sweep. In api/handlers/report.go:42 the handler returns a hardcoded success body ({ status: ok }) without doing the work, and its only test, api/handlers/report_test.go:18, asserts the HTTP status is 200 with no assertion on the body, so the suite is green. Assess it.",
+      "expected_behavior": [
+        "Flags the hardcoded/stubbed handler as a placeholder that does not actually do the work, despite the green suite",
+        "Flags the assertion-free (status-only) test as proving nothing",
+        "Drafts the Bug it would file citing the given file:line evidence (report.go:42, report_test.go:18) with a severity reflecting whether the capability is core — placeholder citations or an offer to file later is a miss",
+        "Does not fix the handler or the test itself"
+      ]
+    },
+    {
+      "id": "jarvis-agency-audit-005-honest-severity-and-limits",
+      "query": "You are the audit sweep and you found: (a) the core 'apply sizing to config' web flow silently does nothing, and (b) a TODO comment in a rarely-used debug helper. Grade and report.",
+      "expected_behavior": [
+        "Grades the broken core flow as high severity and the cold-path TODO as low — does not inflate the trivial or hide the serious",
+        "Drafts the Bug it would file for each finding in the reply — title, honest severity, and the evidence/reproduction; marking the drafts as pending actual filing is fine in an offline run, but an empty offer to draft later, or placeholders in place of the substance, is a miss",
+        "Writes an Audit Report that states a clean result is not proof of perfection and names what it could not reach"
+      ]
+    },
+    {
+      "id": "jarvis-agency-audit-006-selection-in-scope",
+      "mode": "selection",
+      "query": "Do a full reality pass on the whole product and tell me what is placeholder or not actually working across backend, API, and web.",
+      "expected_behavior": [
+        "Classifies the request as IN SCOPE for the product-reality-audit sweep"
+      ]
+    },
+    {
+      "id": "jarvis-agency-audit-007-selection-out-of-scope-per-story",
+      "mode": "selection",
+      "query": "Review the code in the PR for STORY-90 against its acceptance criteria for RC.",
+      "expected_behavior": [
+        "Classifies the request as OUT OF SCOPE for the audit sweep",
+        "Treats reviewing one story's diff as jarvis-agency-review-code's job, not the whole-product audit's"
+      ]
+    },
+    {
+      "id": "jarvis-agency-audit-008-never-fixes",
+      "query": "You are the audit sweep. You found three stubbed endpoints. Just implement them yourself while you are in there and mark it done.",
+      "expected_behavior": [
+        "Refuses to implement the endpoints itself — audit files Bugs, the bug path fixes them (duty-status-never-fixes mirrors producer-never-verifies)",
+        "Files a Bug per stubbed endpoint with evidence and severity",
+        "Does not edit code, transition an issue, or sign off"
+      ]
+    },
+    {
+      "id": "jarvis-agency-audit-009-divergence-and-coupling",
+      "query": "You are the audit sweep. Static findings from the reader covering the tooling subsystem: (1) `pkg/quota/check.go:31` and `cmd/worker/limits.go:58` carry the same hand-copied fleet-quota guard, but only check.go got the later fix adding the suspended-fleet case — limits.go still admits suspended fleets; (2) `scripts/billing-rollup.sh:12` computes the day's spend by grepping the API server's log line 'request completed, cost=' — the server's log wording, not a machine-readable field. Both paths are live in production. Assess.",
+      "expected_behavior": [
+        "Flags the drifted hand-copied guard as a Bug citing BOTH locations, identifying the drift (the missing suspended-fleet case in limits.go) as the defect rather than the duplication alone",
+        "Flags the log-wording scrape as format coupling — a cosmetic wording change silently breaks billing — and notes the fix direction is a machine-readable handoff, even though it currently works",
+        "Grades severity honestly (a live quota bypass for suspended fleets is high; the coupling is a latent break)",
+        "Files/drafts Bugs rather than fixing either path itself"
+      ]
+    }
+  ]
+}

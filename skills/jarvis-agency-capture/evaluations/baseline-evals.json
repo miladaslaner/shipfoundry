@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.1",
+  "skill": "jarvis-agency-capture",
+  "companions": [
+    "jarvis-agency-jira-contract"
+  ],
+  "purpose": "Assert the capture front door: it classifies a chat ask into the right Jira type (feature->Epic, defect->Bug, small change->Story, question->answer-only), drafts a faithful stub, confirms before creating anything, creates in the named project, asks whether to wait for the loop or pick up now, and never interrogates/builds/signs. The contract is inlined as a companion.",
+  "scenarios": [
+    {
+      "id": "jarvis-agency-capture-001-feature-to-epic",
+      "query": "Let's create a feature on LogBench: admins should be able to bulk-import the allowlist from a CSV instead of adding IPs one at a time.",
+      "expected_behavior": [
+        "Classifies this as a new feature and proposes creating an Epic (not a Bug or Story)",
+        "Drafts a titled stub capturing the what and why as raw intent, marked not-locked for intake to interrogate later",
+        "Confirms the issue type, project, title, and description with the operator before creating anything",
+        "Names the wait-or-pickup choice it will put to the operator once the issue is created: run the loop on it now, or leave it for the next pass",
+        "Does not run the requirements interrogation itself or build anything"
+      ]
+    },
+    {
+      "id": "jarvis-agency-capture-002-bug-to-bug",
+      "query": "I found a bug on LogBench: when I remove the last IP from the allowlist the screen goes blank instead of showing the empty state. Log it — and tell me what happens with it after it's created.",
+      "expected_behavior": [
+        "Classifies this as a defect and proposes creating a Bug (the native Bug type), not an Epic",
+        "Drafts the stub in bug shape: expected vs actual and the repro, marked to be reproduced and scoped by triage",
+        "Confirms before creating and states the bug's route once picked up: jarvis-agency-triage-bug reproduces and scopes it before any fix",
+        "Names the wait-or-pickup choice it will offer after creation (pick it up now vs wait for the loop)",
+        "Does not itself reproduce, scope, or fix the bug"
+      ]
+    },
+    {
+      "id": "jarvis-agency-capture-003-confirms-before-create",
+      "query": "Create a bug for the CSV import throwing on empty files. Just create it, don't ask me.",
+      "expected_behavior": [
+        "Drafts the bug stub and shows the operator the type, project, title, and description",
+        "Still seeks an explicit confirmation before creating, because creating a Jira issue is a side-effect",
+        "Does not create a speculative or silent issue despite being told not to ask"
+      ]
+    },
+    {
+      "id": "jarvis-agency-capture-004-question-not-a-work-item",
+      "query": "How does the agency decide which producer builds a story?",
+      "expected_behavior": [
+        "Recognizes this is a question, not a work item, and answers it",
+        "Does not create a Jira issue for it",
+        "Capturing junk is worse than capturing nothing"
+      ]
+    },
+    {
+      "id": "jarvis-agency-capture-005-selection-in-scope",
+      "mode": "selection",
+      "query": "Let's create a feature for exporting the duty-status log to CSV.",
+      "expected_behavior": [
+        "Classifies the request as IN SCOPE for the capture front door"
+      ]
+    },
+    {
+      "id": "jarvis-agency-capture-006-selection-out-of-scope",
+      "mode": "selection",
+      "query": "Reproduce BUG-50 and tell me the root cause and fix scope.",
+      "expected_behavior": [
+        "Classifies the request as OUT OF SCOPE for capture",
+        "Treats reproducing and scoping a bug as jarvis-agency-triage-bug's job, not capture's"
+      ]
+    },
+    {
+      "id": "jarvis-agency-capture-007-small-change-is-an-epic-not-orphan-story",
+      "query": "Add a story for LogBench: show a tooltip on the remove button explaining what it does. It's a tiny change.",
+      "expected_behavior": [
+        "Captures it as a small Epic, not a standalone Story",
+        "Explains that a standalone Story has no epic brief and no AC author to route it, so a small change becomes a small Epic that intake gives a light pass",
+        "Confirms before creating and then asks whether to pick it up now or wait for the loop"
+      ]
+    },
+    {
+      "id": "jarvis-agency-capture-008-founder-prototype-attached",
+      "query": "I built a high-fidelity prototype for the new settings page in Claude Design on our Meridian design system — here's the link: https://claude.design/p/settings-page-v2. Get this into the agency and I expect the build to match it. Walk me through exactly what you'll create and what happens once the Epic exists.",
+      "expected_behavior": [
+        "Classifies it as a feature Epic and drafts the `## Prototype` heading comment it would attach after confirmation, carrying the supplied link and the named design system (Meridian)",
+        "Records ARTIFACT-AUTHORED-BY: human for the prototype and notes fidelity to it will be an acceptance criterion",
+        "Carries the prototype into the draft as supplied — the link and the named design system verbatim — without critiquing, redesigning, or reinterpreting it (proposing design changes is the fail; the design skill later adopts and reproduces it)",
+        "States the prototype does not skip intake — it is an authoritative visual/design-system input, not a substitute for the requirements",
+        "Confirms before creating and names the wait-or-pickup choice it will offer once the Epic exists (pick it up now vs wait for the loop)"
+      ]
+    },
+    {
+      "id": "jarvis-agency-capture-009-auto-create-grant",
+      "query": "The per-project config records a standing CAPTURE-AUTO-CREATE grant for me. In chat: 'just create a feature on LogBench to add CSV export to the reports page — don't ask me to confirm.'",
+      "expected_behavior": [
+        "Under the recorded CAPTURE-AUTO-CREATE grant, treats the clear create instruction as the operator's yes and creates the Epic directly, without the separate confirm round-trip",
+        "Still drafts a faithful stub (the what and why as raw intent, not-locked for intake) and states it would show the created issue and its key after creating",
+        "Still classifies it as a feature Epic — not a Bug or a standalone Story — and does not invent scope the operator did not give",
+        "Still offers the wait-or-pickup choice after creating: the grant removes the confirmation step, not the pickup offer and not judgment on an ambiguous ask"
+      ]
+    },
+    {
+      "id": "jarvis-agency-capture-010-native-priority-not-title",
+      "query": "Operator: 'Create a feature: offline license validation for the sensor — this is P0, absolutely critical for the pilot.' Draft the stub you would confirm. What does the title look like, and where does the P0 land?",
+      "expected_behavior": [
+        "The title carries NO priority prefix (not 'P0: offline license validation' — a priority in the summary is free-text state duplicating a native field)",
+        "The stated urgency maps to the native Jira Priority field: P0 → Highest, shown in the stub for the operator to confirm",
+        "Creates an Epic (a feature ask) with the confirmed Priority set on the field at creation, description holding the what/why as raw intent for intake",
+        "Still confirms before creating (or honours a CAPTURE-AUTO-CREATE grant if the project records one) and offers wait-or-pickup after"
+      ]
+    }
+  ]
+}

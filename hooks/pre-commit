@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# shipfoundry pre-commit hook — blocks a commit if a platform gate fails.
+# Install with ./install-hooks.sh (symlinks this into .git/hooks/pre-commit).
+# Runs the structural gate (lint) + the content gate (scan-secrets). The behavioural gate
+# (eval-runner.sh) needs model calls and runs separately, outside a Claude Code session.
+set -uo pipefail
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null || { cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd; })"
+echo "[pre-commit] running ./lint-platform.sh …"
+if ! "$ROOT/lint-platform.sh"; then
+  echo "[pre-commit] BLOCKED — lint failed. Fix the FAILs above, or commit with --no-verify to override." >&2
+  exit 1
+fi
+echo "[pre-commit] lint passed."
+
+echo "[pre-commit] running ./scan-secrets.sh --staged …"
+if ! "$ROOT/scan-secrets.sh" --staged; then
+  echo "[pre-commit] BLOCKED — secret/PII scan failed. Remove it (or add a known-safe pattern to .secretignore), or commit with --no-verify to override." >&2
+  exit 1
+fi
+echo "[pre-commit] scan-secrets passed."
+exit 0

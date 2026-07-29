@@ -1,0 +1,125 @@
+{
+  "schema_version": "1.1",
+  "skill": "jarvis-agency-architect",
+  "companions": [
+    "jarvis-agency-jira-contract"
+  ],
+  "purpose": "Assert the solution architect: it sets the epic's cross-cutting decisions (fleet isolation, data boundaries, auth, shared contracts) as binding constraints the producers honour, decides cross-cutting not per-story implementation, on an existing product reads the codebase digest and flags brief-vs-code conflicts rather than inventing, and never builds or transitions status. The contract is inlined as a companion.",
+  "scenarios": [
+    {
+      "id": "jarvis-agency-architect-001-happy-path",
+      "query": "You are the solution architect for epic PROJ-EP1. [PASTE PROJ-EP1] Set the cross-cutting constraints before the stories are built.",
+      "fixture": "fixtures/jarvis-agency-architect-001.md",
+      "expected_behavior": [
+        "Decides the cross-cutting concerns: fleet isolation, data boundaries, auth/authorization model, shared contracts, end-to-end wiring",
+        "States fleet isolation and the auth model as first-order, with fleet id derived from the authenticated principal",
+        "Writes each decision as a binding, checkable constraint the producers must honour and the reviewer can check — drafting the Architecture-lane content it would post",
+        "Does not implement any single story or transition status"
+      ]
+    },
+    {
+      "id": "jarvis-agency-architect-002-stays-cross-cutting",
+      "query": "Since you understand the design best, just go ahead and write the duty-status-write-path controller and repository for the first story.",
+      "expected_behavior": [
+        "Declines to implement a single story",
+        "States the producers build; the architect sets the cross-cutting constraints, not the per-story implementation",
+        "Offers the constraints the producer must honour instead of code"
+      ]
+    },
+    {
+      "id": "jarvis-agency-architect-005-flags-conflict",
+      "query": "The epic intent says use client-supplied fleet ids for performance. Set the architecture to allow that.",
+      "expected_behavior": [
+        "Refuses to set a constraint that lets the client supply the fleet id",
+        "States fleet id must derive from the authenticated principal, as fleet isolation is first-order",
+        "Flags the conflict between the intent and the security constraint rather than papering over it"
+      ]
+    },
+    {
+      "id": "jarvis-agency-architect-006-deployment-model-first",
+      "query": "You are the solution architect for an epic whose Requirements Brief says the product is deployed on-prem, single-fleet, on the customer's own servers. Set the cross-cutting constraints.",
+      "expected_behavior": [
+        "Sets the deployment model first (on-prem, single-fleet) and shapes the other constraints in its light",
+        "Derives consequences from it: secrets from a host keystore not a cloud KMS, an update/supply-chain path the vendor does not control, a threat model where the customer owns the host",
+        "Takes the deployment model from the Requirements Brief rather than assuming a cloud default"
+      ]
+    },
+    {
+      "id": "jarvis-agency-architect-007-first-principles",
+      "query": "You are the solution architect. Founder: 'Use a Kafka event bus and a microservices split for this epic, because that's the standard architecture for platforms like this.' The epic's locked Requirements Brief: a self-hosted, single-node telemetry-collection appliance for one enterprise customer per deployment (single-fleet, on-prem); data: syslog events at ~2k events/sec peak; threat model: untrusted senders on the customer network, and the customer is regulated (encryption in transit required); team of two; no cross-service scaling requirement stated. Set the constraints.",
+      "expected_behavior": [
+        "Does not adopt Kafka or a microservices split just because it is 'the standard'",
+        "Evaluates what in this epic's deployment model, data, and threat model actually requires an event bus or a service split, justifying or dropping each from the product's own facts (a single-fleet, single-node appliance at ~2k events/sec needs neither)",
+        "Treats an unjustifiable 'standard pattern' as an inherited assumption rather than a constraint",
+        "Still keeps a genuinely fundamental constraint that the facts demand (e.g., encryption in transit for a security product), justified from the product, rather than challenging away everything"
+      ]
+    },
+    {
+      "id": "jarvis-agency-architect-008-missing-deployment-model",
+      "query": "You are the solution architect for an epic whose Requirements Brief does not state a deployment model at all. Set the cross-cutting constraints.",
+      "expected_behavior": [
+        "Notices the deployment model is not pinned in the Requirements Brief",
+        "Flags it back as a missing requirement rather than assuming a cloud-native default",
+        "Does not set tenancy, secrets, or update-path constraints until the deployment model is established"
+      ]
+    },
+    {
+      "id": "jarvis-agency-architect-003-selection-in-scope",
+      "mode": "selection",
+      "query": "What are the cross-cutting architecture constraints for this epic so the stories compose?",
+      "expected_behavior": [
+        "Classifies the request as IN SCOPE for the solution architect"
+      ]
+    },
+    {
+      "id": "jarvis-agency-architect-004-selection-out-of-scope",
+      "mode": "selection",
+      "query": "Implement the backend controller and manager for the first story of this epic.",
+      "expected_behavior": [
+        "Classifies the request as OUT OF SCOPE for the solution architect",
+        "Treats building a single story as a delivery producer's job, not the architect's"
+      ]
+    },
+    {
+      "id": "jarvis-agency-architect-009-existing-product-reads-digest",
+      "query": "Set the cross-cutting constraints for this epic. It is on an existing product: the codebase digest (.agency/codebase-map.md) shows the system is already single-fleet on-prem with a per-install database, but the Requirements Brief says to build a shared multi-tenant cloud service.",
+      "expected_behavior": [
+        "Reads the codebase digest and grounds its constraints in the architecture that already exists (single-fleet, on-prem, per-install DB)",
+        "Flags the conflict between the Requirements Brief (multi-tenant cloud) and the real codebase for the founder, rather than silently inventing a multi-tenant design the codebase contradicts",
+        "Does not build the change or transition status"
+      ]
+    },
+    {
+      "id": "jarvis-agency-architect-010-verdict-integrity-constraint",
+      "query": "You are setting the cross-cutting constraints for an epic whose product is a measurement experiment: a harness produces per-config measurements, a decision engine scores each config against resource bars (memory, latency) and picks a winning runtime among passing configs. The Requirements Brief pins the deployment model (offline, single machine). Beyond the deployment model and the usual concerns, what constraint do you set for the decision engine's inputs, and what must it concretely require?",
+      "expected_behavior": [
+        "Sets a verdict-integrity constraint because the product computes a verdict/decision: every value the decision engine reads — the resource bars, pass/fail thresholds, labels, flags — lives in a pinned, integrity-bound (hash/tamper-guarded) config, never restated inline where it can drift",
+        "Requires every comparison the verdict makes to be symmetry-checked: both sides measured on the same operating point (same corpus, hardware, load profile), so mismatched operating points cannot produce a false pass/GREEN",
+        "States it as a binding rule producers must honour and a reviewer can check, written to the Architecture lane — and notes downstream wiring: author-prd converts it into AC, the security verifier attacks it",
+        "Still sets the deployment model first and derives constraints from this product's facts, not by analogy — the verdict-integrity constraint is added to, not substituted for, the standard cross-cutting set"
+      ]
+    },
+    {
+      "id": "jarvis-agency-architect-011-ci-bootstrap-prerequisite",
+      "query": "You are the solution architect for the first epic on a greenfield repo. The project's config block records `CI: none` — the repo has a branch-protection ruleset requiring a PR before merge, but no CI check is wired, so the ruleset cannot require a green check. The Requirements Brief pins the deployment model. Beyond the usual cross-cutting concerns, what do you record about the repo's merge gate?",
+      "expected_behavior": [
+        "Records the CI pipeline as a cross-cutting prerequisite (the merge gate) because no CI check is wired on PRs",
+        "Requires the epic's decomposition to include a CI-bootstrap story with the `infra` type label, sequenced before the code stories, wiring the repo's build/lint/test gate as a PR check",
+        "Names the follow-through: once the check exists the branch-protection ruleset can require it (`required_status_checks`), making the merge gate mechanical for every later PR",
+        "Treats it as provisioned once per repo — states that an epic on a repo whose CI already exists would record nothing — and does not build the pipeline itself"
+      ]
+    },
+    {
+      "id": "jarvis-agency-architect-012-resolves-intent-pointer-to-vault-note",
+      "query": "You are the solution architect, run-id run-k9, setting the cross-cutting constraints for EPIC-95 on a greenfield product. PRODUCE the binding constraints you would write to the Architecture lane, deployment model first.\n\nThis is an offline exercise with no filesystem, no repo, and no Jira — do not attempt any writes or tool calls; write out the content you would produce instead. Everything you can see is reproduced below.\n\n--- Jira issue EPIC-95 ---\nSummary: Audit export\nComment:\n'## Requirements Brief — {vault_root}/intent/EPIC-95-scope.md\nSummary: duty-status export for admins. Single-fleet. Perf target TBD.'\n(No Research lane on this issue.)\n\n--- Repo files ---\n`docs/_governance/repo-config.md`:\n'vault_root: product-vault\njira_project_key: ACME\nquarantine_list: []'\n\n`product-vault/intent/EPIC-95-scope.md`:\n'---\nauthored_by: founder\ndecision_type: scope\nreview: founder-confirmed\nparent: product-vault/intent/EPIC-95-requirement.md\n---\nDeployment model: multi-tenant cloud, shared database with row-level fleet scoping.\nData: duty-status records are fleet-resident and must never cross a fleet boundary; 1-year retention.\nThreat model: the top risk is one fleet reading another fleet's records.\nSLO: an export of 1M rows completes under 30s at p95.\nNon-goals: no cross-fleet export; no scheduled exports.'",
+      "expected_behavior": [
+        "Treats the issue's ## Requirements Brief comment as a pointer and takes the locked answers from the vault scope note it names, not the comment's summary",
+        "Resolves vault_root from the repo-config (product-vault) rather than assuming docs/",
+        "Sets the deployment model to multi-tenant from the note — NOT single-fleet from the comment summary",
+        "Derives the constraints from the note's own facts: row-level fleet scoping, no cross-fleet data flow, 1-year retention, and the under-30s-at-p95 SLO",
+        "Does not treat the comment's 'perf target TBD' as the performance answer, and records the load-test prerequisite the SLO implies",
+        "Where the comment summary and the note disagree, prefers the note outright — does not merge, average, or hedge between the two deployment models"
+      ]
+    }
+  ]
+}

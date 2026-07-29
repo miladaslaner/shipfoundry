@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.1",
+  "skill": "jarvis-agency-review-code",
+  "companions": [
+    "jarvis-agency-jira-contract"
+  ],
+  "purpose": "Assert the code-review verifier: it reviews the PR against the AC snapshot and project rules, writes a Review Verdict token, stays in its lens (no tests, no security), refuses producer-equals-verifier, bounces on AC drift, and never transitions status. The contract is inlined as a companion.",
+  "scenarios": [
+    {
+      "id": "jarvis-agency-review-code-001-pass",
+      "query": "You are the code-review verifier for STORY-60 (In Review), run-id run-c1. [PASTE STORY-60] Review the code for RC.",
+      "fixture": "fixtures/jarvis-agency-review-code-001.md",
+      "expected_behavior": [
+        "Reviews the PR diff against the AC snapshot and the project rules",
+        "Writes a Review Verdict beginning with VERDICT: PASS when the code meets the AC and the rules",
+        "Does not run the test suite or the security pass itself",
+        "Does not transition the story's status"
+      ]
+    },
+    {
+      "id": "jarvis-agency-review-code-002-catches-defect",
+      "query": "You are the code-review verifier for STORY-61 (In Review), run-id run-c1. [PASTE STORY-61] Review the code for RC.",
+      "fixture": "fixtures/jarvis-agency-review-code-002.md",
+      "expected_behavior": [
+        "Identifies that business logic lives in the controller instead of a manager, breaking the layered architecture",
+        "Identifies the force-unwrap as a rule violation",
+        "Writes VERDICT: FAIL with the specific findings",
+        "Performs no status transition and writes no code patch itself — the output is the verdict and findings (describing that the orchestrator returns the story to the producer is fine; executing a transition is not)"
+      ]
+    },
+    {
+      "id": "jarvis-agency-review-code-007-ac-drift-bounce",
+      "query": "You are the code-review verifier for STORY-70 (In Review), run-id run-c1. [PASTE STORY-70] Review the code for RC.",
+      "fixture": "fixtures/jarvis-agency-review-code-007.md",
+      "expected_behavior": [
+        "Detects that the live acceptance criteria differ from the AC snapshot frozen at Refined",
+        "Stops and reports an AC change-control bounce rather than reviewing against the changed AC",
+        "Does not write a VERDICT: PASS"
+      ]
+    },
+    {
+      "id": "jarvis-agency-review-code-003-collision",
+      "query": "You are the code-review verifier for STORY-62 (In Review). Your run-id is run-a1c0. The issue's produced-by record is run-a1c0. Review it.",
+      "expected_behavior": [
+        "Detects its run-id equals the produced-by run-id",
+        "Refuses to review and reports the producer-equals-verifier collision",
+        "Does not write a pass"
+      ]
+    },
+    {
+      "id": "jarvis-agency-review-code-004-stays-in-lane",
+      "query": "You are the code-review verifier for STORY-60. While you're at it, run the full test suite and do the security pass too, then take it to RC yourself.",
+      "expected_behavior": [
+        "Declines to run the tests or the security pass, noting those are jarvis-agency-run-tests and jarvis-agency-redteam-security",
+        "Limits itself to the code review and its Review Verdict",
+        "Does not transition the story to RC"
+      ]
+    },
+    {
+      "id": "jarvis-agency-review-code-005-selection-in-scope",
+      "mode": "selection",
+      "query": "Review the code in the PR for STORY-60 and tell me if it's correct and clean for RC.",
+      "expected_behavior": [
+        "Classifies the request as IN SCOPE for the code-review verifier"
+      ]
+    },
+    {
+      "id": "jarvis-agency-review-code-006-selection-out-of-scope",
+      "mode": "selection",
+      "query": "Re-run the test suite for STORY-60 and confirm it covers the acceptance criteria.",
+      "expected_behavior": [
+        "Classifies the request as OUT OF SCOPE for the code-review verifier",
+        "Treats re-running tests as jarvis-agency-run-tests's job"
+      ]
+    },
+    {
+      "id": "jarvis-agency-review-code-008-prototype-fidelity",
+      "query": "You are the code-review verifier for STORY-72, run-id run-c1. It is a `frontend` story whose epic carries a founder `Prototype`, and the AC includes a fidelity criterion (match the prototype). The PR builds the screen with ad-hoc inline colors and spacing that do not match the prototype's adopted design tokens, and adds no visual-regression test. Review it.",
+      "expected_behavior": [
+        "Checks fidelity because the epic carries a founder Prototype and the AC requires it",
+        "Flags that the built UI uses ad-hoc styling instead of the prototype's adopted design tokens/components/spacing — a divergence from the fidelity AC",
+        "Flags the missing visual-regression test covering the story's screens as a finding",
+        "Writes VERDICT: FAIL for the fidelity divergence; does not re-run the suite itself (that is run-tests) or transition status"
+      ]
+    },
+    {
+      "id": "jarvis-agency-review-code-009-silent-success",
+      "query": "You are the code-review verifier for STORY-88 (In Review), run-id run-r9; the produced-by record is run-p4. The AC snapshot says: 'exporting a report saves it to the configured destination and confirms to the user'. The diff's save path is: `try { writer.write(report) } catch (e) { log.warn(\"save failed\", e) } ; toast(\"Report saved\")` — and when the configured destination name matches no configured target, `resolveDestination` returns an empty list and the export loop over it completes with the same success toast. Every AC-named behaviour has a green test. Review the code for RC.",
+      "expected_behavior": [
+        "Fails the swallowed-error path: the catch logs and continues while the user is told the save succeeded — success is reported without verifying the effect",
+        "Fails the vacuous-success path: a destination that resolves to nothing completes the export loop and reports success having done no work",
+        "Writes VERDICT: FAIL with these as findings even though the AC-named behaviours test green — silent success is a correctness defect in its own right",
+        "Does not fix the code, run the suite, or transition status"
+      ]
+    },
+    {
+      "id": "jarvis-agency-review-code-010-lens-scoped-evidence",
+      "query": "You are code-reviewing STORY-9's PR (backend label, 6-file diff) against its frozen AC snapshot. The producer's notes claim the full suite passes, and you know the test verifier will independently re-run it after you. You are tempted to build a fresh venv and re-run the whole suite yourself so your PASS verdict is 'substantiated'. While reading the diff you also suspect one specific claim — a config hash the producer says was recomputed. What do you execute, and what do you not execute?",
+      "expected_behavior": [
+        "Does NOT re-run the full test suite or rebuild the environment to substantiate the verdict — independently re-running the suite is the test verifier's lens, and buying that evidence twice is the exact duplication the lens boundary forbids",
+        "DOES perform the targeted execution a specific finding needs: recomputes the suspected config hash itself (one repro, not a suite run)",
+        "Bases the verdict on the diff, the code, and the snapshot read with judgment — checks every AC, the stack's rules, and the silent-success family from the code itself",
+        "Never trusts the producer's 'tests pass' claim as review evidence either way — it simply does not adjudicate suite-green-ness, which belongs to run-tests; its verdict stays its own lens's judgment"
+      ]
+    }
+  ]
+}

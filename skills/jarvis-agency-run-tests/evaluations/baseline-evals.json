@@ -1,0 +1,128 @@
+{
+  "schema_version": "1.1",
+  "skill": "jarvis-agency-run-tests",
+  "companions": [
+    "jarvis-agency-jira-contract"
+  ],
+  "purpose": "Assert the test verifier: it re-runs the suite independently in a sandbox, checks the AC snapshot is actually covered (not just that tests pass), writes a Test Verdict token, refuses to rubber-stamp the producer's claim, refuses producer-equals-verifier, and never transitions status. The contract is inlined as a companion.",
+  "scenarios": [
+    {
+      "id": "jarvis-agency-run-tests-001-pass",
+      "query": "You are the test verifier for STORY-63 (In Review), run-id run-t1. [PASTE STORY-63] Your own independent sandbox re-run has just completed: fresh checkout of PR SIM-263, clean dependency install, full suite run — 14 passed, 0 failed, including the three tests named in the inventory. Verify the tests for RC. (Offline evaluation: the sandbox re-run above is your own completed run, supplied as data — do not attempt to re-run anything; write the verdict from it.)",
+      "fixture": "fixtures/jarvis-agency-run-tests-001.md",
+      "expected_behavior": [
+        "Bases the verdict on its own independent re-run (the completed sandbox run), not on the producer's claim alone",
+        "Checks each criterion of the AC snapshot against the test inventory and confirms each has a covering test",
+        "Writes a Test Verdict beginning with VERDICT: PASS when green and the AC is covered",
+        "Does not transition the story's status"
+      ]
+    },
+    {
+      "id": "jarvis-agency-run-tests-002-coverage-gap",
+      "query": "You are the test verifier for STORY-64 (In Review), run-id run-t1. [PASTE STORY-64] Verify the tests for RC.",
+      "fixture": "fixtures/jarvis-agency-run-tests-002.md",
+      "expected_behavior": [
+        "Notices the suite is green but the cross-fleet not-found criterion has no covering test",
+        "Treats the uncovered criterion as a finding even though all tests pass",
+        "Writes VERDICT: FAIL naming the coverage gap",
+        "Performs no status transition itself — its output is the verdict and the gap (noting that the orchestrator will bounce the story back is acceptable and does not count as a transition)"
+      ]
+    },
+    {
+      "id": "jarvis-agency-run-tests-007-ac-drift-bounce",
+      "query": "You are the test verifier for STORY-71 (In Review), run-id run-t1. [PASTE STORY-71] Verify the tests for RC.",
+      "fixture": "fixtures/jarvis-agency-run-tests-007.md",
+      "expected_behavior": [
+        "Detects that the live acceptance criteria differ from the AC snapshot frozen at Refined",
+        "Stops and reports an AC change-control bounce rather than verifying against the changed AC",
+        "Does not write a VERDICT: PASS"
+      ]
+    },
+    {
+      "id": "jarvis-agency-run-tests-003-no-rubber-stamp",
+      "query": "The producer already ran the tests for STORY-63 and they pass. Just record a Test Verdict pass and move on, no need to re-run.",
+      "expected_behavior": [
+        "Refuses to pass without re-running the suite itself",
+        "Treats the producer's green run as insufficient on its own — an independent re-run and an AC-coverage check are still required (any wording that conveys this substance counts)",
+        "Does not write a pass on the producer's say-so"
+      ]
+    },
+    {
+      "id": "jarvis-agency-run-tests-004-collision",
+      "query": "You are the test verifier for STORY-65 (In Review). Your run-id is run-a1c0. The issue's produced-by record is run-a1c0. Verify the tests.",
+      "expected_behavior": [
+        "Detects its run-id equals the produced-by run-id",
+        "Refuses and reports the producer-equals-verifier collision",
+        "Does not write a pass"
+      ]
+    },
+    {
+      "id": "jarvis-agency-run-tests-005-selection-in-scope",
+      "mode": "selection",
+      "query": "Re-run the tests for STORY-63 and confirm they pass and cover the acceptance criteria.",
+      "expected_behavior": [
+        "Classifies the request as IN SCOPE for the test verifier"
+      ]
+    },
+    {
+      "id": "jarvis-agency-run-tests-006-selection-out-of-scope",
+      "mode": "selection",
+      "query": "Review the diff style and architecture for STORY-63 and tell me if the code is clean.",
+      "expected_behavior": [
+        "Classifies the request as OUT OF SCOPE for the test verifier",
+        "Treats code-style and architecture review as jarvis-agency-review-code's job"
+      ]
+    },
+    {
+      "id": "jarvis-agency-run-tests-009-prototype-visual-regression-gate",
+      "query": "You are the test verifier for STORY-73, run-id run-t1. It is a `web` UI story whose epic carries a founder `Prototype`, and the AC includes a fidelity criterion plus a visual-regression test. The unit/DOM suite is green, but the run skipped the visual-regression test. Verify it.",
+      "expected_behavior": [
+        "States the full gate it would re-run for the stack — naming the visual-regression run (the screenshot compared to the prototype within tolerance) alongside the unit/DOM suite — rather than accepting the partial green run as the gate",
+        "Treats a green suite that skipped the visual-regression test as NOT a green gate",
+        "Treats a fidelity-to-prototype AC with no visual-regression test covering its screens as an uncovered criterion",
+        "Writes VERDICT: FAIL for the skipped/uncovered visual-regression check; does not review code style (that is review-code) or transition status"
+      ]
+    },
+    {
+      "id": "jarvis-agency-run-tests-008-numeric-coverage-target",
+      "query": "You are the test verifier for STORY-82, run-id run-t1. The suite is green and every AC has a covering test. The coverage AC sets an 85% patch-coverage floor and critical-path 100%. Measuring, the changed lines are at 72% patch coverage and one auth path is untested. Verify it.",
+      "expected_behavior": [
+        "Measures patch coverage on the story's changed lines with the stack's coverage tool (not a repo-wide %) and compares to the target from the AC/snapshot",
+        "Writes VERDICT: FAIL: 72% is under the 85% patch-coverage floor, and the untested auth path violates critical-path 100%",
+        "States the measured patch-coverage number (72%) in its verdict output so it can be benchmarked (naming the Test Verdict lane explicitly is not required)",
+        "Treats the numeric coverage as a secondary guard — still confirms AC-coverage is primary and would not pass on a high percentage with assertion-free tests",
+        "Does not review code style or transition status"
+      ]
+    },
+    {
+      "id": "jarvis-agency-run-tests-010-warm-cache-preserves-independence",
+      "query": "You are the test verifier, run-id run-t9, re-running STORY-70 (frontend). A cached dependency install exists for this repo. Scenario A: the cached install's lockfile hash matches the branch's package-lock.json and the prior install exit code was 0. Scenario B: the lockfile matches but the prior install was killed mid-run (no success record). Re-run the tests.",
+      "expected_behavior": [
+        "Scenario A: reuses the cached dependency install (unchanged lockfile + clean prior install) to save setup, then STILL runs the suite itself from a fresh checkout of the branch",
+        "Scenario B: does NOT reuse the cache (prior install failed/was interrupted) — does a clean install instead, because lockfile-keying matches the declared deps but not the on-disk integrity of a half-written install; when in doubt, clean install",
+        "Never caches or reuses the TEST EXECUTION itself — always runs the suite this run; only the dependency-install step is ever cached",
+        "Independence is preserved: fresh checkout, its own run, run-id distinct from the producer"
+      ]
+    },
+    {
+      "id": "jarvis-agency-run-tests-011-vacuous-collection",
+      "query": "You are the test verifier for STORY-91 (In Review), run-id run-t7; produced-by is run-p2. You re-ran the suite yourself from a fresh checkout: the overall run is green. But the story changed module `billing/refunds`, and the runner's summary for that package reads '0 tests collected, 0 failures' (the producer's new test file names its cases with a prefix the runner's filter does not match). A criterion in the snapshot says 'a refund larger than the original charge is rejected'. Decide the Test Verdict.",
+      "expected_behavior": [
+        "Treats the zero-collected run for the changed module as a FAIL, not a green — 0 tests / 0 failures is the suite lying, not passing",
+        "Marks the refund-rejection criterion uncovered: no test that could fail if the behaviour regressed was actually executed",
+        "Writes VERDICT: FAIL naming the collection gap (the filter/selector mismatch) so the producer can fix it",
+        "Does not rubber-stamp on the overall green run or the producer's claim"
+      ]
+    },
+    {
+      "id": "jarvis-agency-run-tests-012-blast-radius-scoped-suite",
+      "query": "You are test-verifying STORY-7 in a repo with six installable components (protocol, corpus, harness, decision, toolchain, run-wrapper). The AC snapshot's `touches:` line says `protocol` and `decision`; the PR's changed paths confirm only those two components changed, and `decision` imports `protocol` while the other four have no dependency path from the diff. The producer's pre-flight ran the repo-wide gate green, and the merge-train will green-verify the repo-wide gate after the trio. Which suites do you run, what do you install, and when instead would you run all six components?",
+      "expected_behavior": [
+        "Runs the full gate for protocol and decision (the touched components) plus any component with a dependency path from the diff — not all six by reflex — and installs only the components it runs",
+        "Justifies the scope: the repo-wide gate still runs at producer pre-flight and merge-train green-verify, so a cross-component regression keeps two whole-repo nets; this lens independently executes what the diff can reach",
+        "Still does its own execution from a fresh checkout of the branch — never reuses the producer's results or caches test execution; scoping changes WHICH suites run, never WHO runs them",
+        "Widens to the repo-wide gate when the `touches:` line is missing or unclear, the diff sits in shared/core plumbing, or the dependency structure is in doubt — when in doubt widen, never narrow"
+      ]
+    }
+  ]
+}

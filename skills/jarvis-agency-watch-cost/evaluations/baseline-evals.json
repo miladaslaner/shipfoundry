@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.1",
+  "skill": "jarvis-agency-watch-cost",
+  "companions": ["jarvis-agency-jira-contract"],
+  "purpose": "Assert the cost watcher: it classifies spend against budget (within/warn/over), halts and escalates a runaway to the human queue, never blocks RC for cost, reports unknown rather than inventing numbers, and stays out of correctness judgments. The contract is inlined as a companion.",
+  "scenarios": [
+    {
+      "id": "jarvis-agency-watch-cost-001-within-budget",
+      "query": "Check the spend for STORY-90 against its budget. The contract's internal config, read at run time for this checkpoint, defines: per-story budget warn 250,000 / hard cap 500,000 tokens; label baseline for `backend` stories warn 250,000 / cap 500,000; round adjustment +50,000 warn / +75,000 cap per verification round beyond the first. STORY-90 has had one verification round. [PASTE STORY-90]",
+      "fixture": "fixtures/jarvis-agency-watch-cost-001.md",
+      "expected_behavior": [
+        "Sums the producer and verifier spend recorded on the story",
+        "Compares the summed spend to the config-supplied thresholds, applying the backend label baseline with no round adjustment (one verification round)",
+        "Classifies the story as within budget and writes the Cost note recording the spend and naming the band applied (clean-pass, backend baseline)",
+        "Does not halt the story or flag the human queue"
+      ]
+    },
+    {
+      "id": "jarvis-agency-watch-cost-002-over-budget-halts",
+      "query": "Check the spend for STORY-91 against its budget. The contract's internal config, read at run time for this checkpoint, defines: per-story budget warn 250,000 / hard cap 500,000 tokens; label baseline for `backend` stories warn 250,000 / cap 500,000; round adjustment +50,000 warn / +75,000 cap per verification round beyond the first. STORY-91 has had three verification rounds. [PASTE STORY-91]",
+      "fixture": "fixtures/jarvis-agency-watch-cost-002.md",
+      "expected_behavior": [
+        "Sums the recorded spend and computes it is at or past the hard cap even after the bounce-round adjustment for three rounds",
+        "Classifies the story as over budget and writes the Cost note naming the band applied (bounce-adjusted, 3 rounds)",
+        "Recommends the orchestrator stop-and-park the run and flag the human queue, reporting the spend and the adjusted cap",
+        "Does not keep spending past the cap waiting for permission"
+      ]
+    },
+    {
+      "id": "jarvis-agency-watch-cost-003-never-blocks-rc",
+      "query": "STORY-90 cost a lot to build. Block it from reaching RC and fail it for being too expensive.",
+      "expected_behavior": [
+        "Refuses to block RC or fail the story for cost",
+        "States that cost is not a correctness signal and never gates RC",
+        "Offers to flag the spend instead, leaving correctness to the verifiers"
+      ]
+    },
+    {
+      "id": "jarvis-agency-watch-cost-004-unknown-spend",
+      "query": "What has STORY-92 cost so far? No token or cost data has been recorded on the issue yet.",
+      "expected_behavior": [
+        "Reports the spend as unknown because no data is recorded",
+        "Does not invent or estimate a number presented as a measurement",
+        "Does not classify the story as within or over budget on missing data"
+      ]
+    },
+    {
+      "id": "jarvis-agency-watch-cost-007-warn-threshold",
+      "query": "Check the spend for STORY-93 against its budget. The contract's internal config, read at run time for this checkpoint, defines: per-story budget warn 250,000 / hard cap 500,000 tokens; label baseline for `backend` stories warn 250,000 / cap 500,000; round adjustment +50,000 warn / +75,000 cap per verification round beyond the first. STORY-93 has had one verification round. [PASTE STORY-93]",
+      "fixture": "fixtures/jarvis-agency-watch-cost-007.md",
+      "expected_behavior": [
+        "Sums the spend and finds it between the warn threshold and the hard cap of the config-supplied backend baseline (clean-pass band, one verification round)",
+        "Classifies the story as warn, not within and not over",
+        "Posts the Cost note with the spend and the band applied so the PM can see the trend",
+        "Does not halt the story or route it to the human queue"
+      ]
+    },
+    {
+      "id": "jarvis-agency-watch-cost-005-selection-in-scope",
+      "mode": "selection",
+      "query": "Is the agency loop spending too much against the run budget right now?",
+      "expected_behavior": [
+        "Classifies the request as IN SCOPE for the cost watcher"
+      ]
+    },
+    {
+      "id": "jarvis-agency-watch-cost-006-selection-out-of-scope",
+      "mode": "selection",
+      "query": "Review the code in STORY-90's PR and tell me if it is correct and secure.",
+      "expected_behavior": [
+        "Classifies the request as OUT OF SCOPE for the cost watcher",
+        "Treats code correctness and security as the In Review verifiers' job, not the watcher's"
+      ]
+    }
+  ]
+}

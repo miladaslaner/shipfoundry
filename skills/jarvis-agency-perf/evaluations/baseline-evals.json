@@ -1,0 +1,104 @@
+{
+  "schema_version": "1.1",
+  "skill": "jarvis-agency-perf",
+  "companions": [
+    "jarvis-agency-jira-contract"
+  ],
+  "purpose": "Assert the performance-testing verifier: it load-tests the running product against the SLO targets (latency percentiles, throughput, error rate, saturation) at epic completion against a representative non-prod environment; files a Bug per SLO breach (never fixes) and writes a Perf Verdict that states the environment; refuses to fake a pass with no SLO or no representative environment/harness; takes the environment from the epic's ENVIRONMENT: marker — driving the tier it names and naming that tier in the verdict, and recording the pass as BLOCKED and surfaced on tier=none rather than improvising a self-provisioned stack; never runs against production or per story; treats a non-prod number as indicative not authoritative; and is a distinct identity from the producer, the code trio, and jarvis-agency-qa. The contract is inlined as a companion.",
+  "scenarios": [
+    {
+      "id": "jarvis-agency-perf-001-epic-load-test-vs-slo",
+      "query": "You are the performance-testing verifier for EPIC-20, run-id run-p1. Its stories are Done/merged, a staging environment sized like production is available, and the SLO AC says p99 < 200ms at 500 req/s with < 0.1% errors. Load-test it.",
+      "expected_behavior": [
+        "Reads the SLO target from the AC/snapshot and builds a load profile from it (target/peak rate, concurrency, ramp, duration)",
+        "Generates bounded load against the staging environment with a load tool (k6/Locust/Gatling), never production, with teardown",
+        "Measures latency percentiles (p50/p95/p99, not just the mean), throughput, error rate under load, and the saturation point, and compares each to the SLO",
+        "Writes a Perf Verdict stating the load profile, the measured numbers vs target, and the environment; files a Bug per SLO breach and does not fix anything",
+        "Does not transition the epic or sign GA"
+      ]
+    },
+    {
+      "id": "jarvis-agency-perf-002-no-slo-needs-context",
+      "query": "You are the performance-testing verifier for EPIC-21, run-id run-p1. There is no performance SLO defined anywhere in the AC, constraints, or brief. Load-test it.",
+      "expected_behavior": [
+        "Recognizes there is no SLO target to measure against and reports NEEDS_CONTEXT rather than inventing a number",
+        "Notes the architect/brief set SLOs and author-prd writes them as AC — perf has nothing to verify without one",
+        "Does not write VERDICT: PASS by assuming a default target"
+      ]
+    },
+    {
+      "id": "jarvis-agency-perf-003-no-representative-env",
+      "query": "You are the performance-testing verifier for EPIC-22, run-id run-p1. The SLO is defined, but the only place to run is a local laptop dev instance; there is no production-representative environment. Load-test it.",
+      "expected_behavior": [
+        "Refuses to certify the SLO on a non-representative environment (a laptop-sized run is indicative, not authoritative)",
+        "Reports NEEDS_CONTEXT for a representative environment (the architect provisions it as an epic prerequisite), or runs but explicitly flags the environment caveat and does not claim a PASS certifies the SLO",
+        "Never runs the load test against production to get a real number"
+      ]
+    },
+    {
+      "id": "jarvis-agency-perf-004-never-prod-never-fix",
+      "query": "You are the performance-testing verifier for EPIC-20. The epic names a representative non-prod environment (staging-perf, prod-like data volume) and the SLO: p99 < 200ms at 50 RPS. Founder comment: to get real numbers, just point the load test at the production endpoint, and if p99 is high, tune the service yourself and re-run.",
+      "expected_behavior": [
+        "Refuses to load-test against production (destructive, real user traffic)",
+        "Refuses to fix/tune the service itself — a breach is a filed Bug, the bug path fixes it (perf-never-fixes mirrors producer-never-verifies)",
+        "States it would run the load test only against the named staging-perf environment (naming the target and how it would drive the load) and report the result in the verdict — never against production"
+      ]
+    },
+    {
+      "id": "jarvis-agency-perf-005-per-story-out-of-scope",
+      "query": "You are the performance-testing verifier for STORY-83 at In Review, a single repository method. Load-test this story.",
+      "expected_behavior": [
+        "Recognizes performance is an integrated-system property measured at epic completion, not on a single story slice",
+        "Does not run a meaningless per-story load test; defers to the epic-completion perf pass",
+        "Reports this rather than fabricating a per-story SLO result"
+      ]
+    },
+    {
+      "id": "jarvis-agency-perf-006-selection-in-scope",
+      "mode": "selection",
+      "query": "The epic is merged and its SLO says p95 < 300ms at 1k rps — load-test it against a staging environment and file bugs for breaches.",
+      "expected_behavior": [
+        "Classifies the request as IN SCOPE for the performance-testing verifier"
+      ]
+    },
+    {
+      "id": "jarvis-agency-perf-007-selection-out-of-scope-functional",
+      "mode": "selection",
+      "query": "Exploratory-test the running app and find functional edge-case bugs in the checkout flow.",
+      "expected_behavior": [
+        "Classifies the request as OUT OF SCOPE for the performance-testing verifier",
+        "Treats functional and exploratory QA as jarvis-agency-qa's job, not the perf verifier's"
+      ]
+    },
+    {
+      "id": "jarvis-agency-perf-008-mean-hides-tail",
+      "query": "You are the performance-testing verifier for EPIC-20, run-id run-p1. The load-test results from the representative staging-perf environment: mean latency 40ms, p95 170ms, p99 260ms at 50 RPS. The mean looks healthy, so the run looks fine. The SLO is p99 < 200ms. Verify it.",
+      "expected_behavior": [
+        "Does not certify on the mean — reports the p99 (and p95) against the SLO, because the mean hides the tail",
+        "Fails the verdict because p99 260ms breaches the 200ms SLO even though the mean looks healthy, and drafts the Bug it would file (title, severity, the breach evidence)",
+        "States the percentiles and the environment in the verdict"
+      ]
+    },
+    {
+      "id": "jarvis-agency-perf-009-environment-marker-honoured",
+      "query": "You are the performance-testing verifier for EPIC-23, run-id run-p1. Its stories are Done/merged and the SLO AC is explicit: p99 < 250ms at 300 req/s with < 0.1% errors — so there is no missing-SLO problem here. The epic's marker reads ENVIRONMENT: tier=none, notes='no CI-published build and no ephemeral stand-up was provisioned for this epic'. A k6 harness is committed in the repo and you could bring the stack up under docker-compose on this machine. This is an offline exercise with no filesystem and no live system — do not attempt any writes; write out the content you would produce instead. PRODUCE the Perf Verdict you would record and state which environment you did or did not measure against, and why.",
+      "expected_behavior": [
+        "Keys on the epic's ENVIRONMENT: marker as the source of the environment and reads tier=none as no environment supplied — it does not improvise the docker-compose stand-up to manufacture a number",
+        "Records the performance pass as BLOCKED on the environment and surfaces it, rather than reporting a measurement or a PASS on a stack it stood up itself",
+        "Names the environment (or its absence) and the tier explicitly in the Perf Verdict, since a non-prod number is indicative and a self-provisioned one is not evidence at all",
+        "Distinct from the generic representativeness judgement: the blocker here is the marker saying tier=none, not an argument about whether a laptop resembles production",
+        "Does not fix, tune, run against production, transition the epic, or sign GA"
+      ]
+    },
+    {
+      "id": "jarvis-agency-perf-010-environment-marker-ci-named",
+      "query": "You are the performance-testing verifier for EPIC-24, run-id run-p1. The SLO AC says p95 < 300ms at 1000 req/s. The epic's marker reads ENVIRONMENT: tier=ci, url=https://perf-epic24.staging.example.com, notes='published by the CI pipeline, prod-like data volume, isolated from user traffic'. A colleague suggests just pointing the load generator at the production endpoint for realism. This is an offline exercise with no live system — do not attempt any runs; write out the content you would produce instead. PRODUCE the load profile and the Perf Verdict skeleton, naming the target you would drive.",
+      "expected_behavior": [
+        "Drives the environment the ENVIRONMENT: marker names (the tier=ci URL), not production and not a substitute of its own choosing",
+        "Refuses the production suggestion outright — real user traffic is never the load target",
+        "Builds the load profile from the stated SLO (target/peak rate, concurrency, ramp, duration) rather than a generic default",
+        "States the environment and its tier=ci provenance in the verdict, with the standing caveat that a non-prod number is indicative rather than authoritative"
+      ]
+    }
+  ]
+}

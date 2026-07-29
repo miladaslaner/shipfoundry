@@ -1,0 +1,7 @@
+# Paths excluded from the distribution bundle (the shareable -public.zip).
+# build-dist.sh reads this as the single source of exclusions.
+# Internal-only content lives in *-internal.md files or _internal/ paths.
+
+reference/_internal/
+.distignore
+dist/

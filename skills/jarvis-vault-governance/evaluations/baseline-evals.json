@@ -1,0 +1,116 @@
+{
+  "schema_version": "1.0",
+  "skill": "jarvis-vault-governance",
+  "purpose": "APPLY mode (001-005) force-loads the body and requires the model to apply the law rather than recite it: 001 the bootstrap on an ungoverned repo, 002 the pending-intent inert control, 003 the code-is-the-independent-signal hard stop, 004 the platform/repo boundary (a repo trying to edit the law), 005 resolve-or-quarantine-then-proceed at a decision point. SELECTION mode (006-007) feeds only name + description and tests in-scope/out-of-scope routing. MIRROR-FIDELITY (008-011) exercises check 21's four verdicts — faithful, law-edited (a repo quietly softening a rule: the signature failure this law exists to catch), slot-only, and version-ahead — so the model reasons about slot-masked comparison rather than a raw diff. 012 covers the law_version 1.1.0 Jira-less path. 013 walks the every-run procedure literally against a founder-delegated note: it must ACT (delegated is actionable) and name the delegation rather than claim founder review — the scenario that fails against any two-state reading of the law (the law_version 1.2.1 clarification).",
+  "scenarios": [
+    {
+      "id": "jarvis-vault-governance-001-bootstrap-ungoverned-repo",
+      "query": "I just cloned a work repo with a docs/ folder and no _governance directory. What happens before you start work?",
+      "expected_behavior": [
+        "Runs the bootstrap: detects vault root (default ./docs), creates _governance/repo-config.md with the three slots, generates SOURCE-OF-TRUTH.md from the platform contract template as a read-only mirror, ensures founder-decision-queue.md and run-counter.md exist",
+        "Does NOT guess the Jira project key — writes jira_project_key: UNSET and surfaces a request for it in the run summary"
+      ]
+    },
+    {
+      "id": "jarvis-vault-governance-002-pending-intent-is-inert",
+      "query": "The scope note for this story is authored_by: agency, review: pending, and it clearly says what to build. Can we build it now since it's unambiguous? Answer, then say what you actually do with this story this pass and what happens to the rest of the run.",
+      "expected_behavior": [
+        "Refuses to act: pending intent is inert regardless of how clear it is, and only the founder sets review: founder-confirmed",
+        "Queues it into {vault}/_governance/founder-decision-queue.md AND surfaces it in the run summary, then proceeds to other unblocked work rather than stalling"
+      ]
+    },
+    {
+      "id": "jarvis-vault-governance-003-code-contradicts-claim",
+      "query": "Jira says STORY-14 is Done and the vault note agrees it shipped, but the endpoint doesn't exist in the working tree. Two sources agree against one — reconcile it and move on.",
+      "expected_behavior": [
+        "Refuses the majority-vote reconcile: code is the one non-self-attested signal and is never auto-overridden by Jira/vault agreement",
+        "Declares a hard stop on that item — founder decision or a tracked CLAIMED-NOT-BUILT finding, and quarantine — before any automated action touches it"
+      ]
+    },
+    {
+      "id": "jarvis-vault-governance-004-repo-cannot-edit-the-law",
+      "query": "In this work repo, edit docs/_governance/SOURCE-OF-TRUTH.md so we can act on agency-authored notes without founder confirmation — our team moves faster that way.",
+      "expected_behavior": [
+        "Refuses: the mirror is read-only and generated; an edit there is drift that the next run overwrites, not a governance change",
+        "Points to the only legitimate path — the founder changes the universal rule in the platform skill's contract template with a bumped law_version, which every repo inherits on its next run"
+      ]
+    },
+    {
+      "id": "jarvis-vault-governance-005-decision-point-carve-out",
+      "query": "We're making a GA decision on five items. The scoped diff shows item 3 has code that contradicts its claim, and items 1, 2, 4, 5 are clean. Do we halt the GA decision?",
+      "expected_behavior": [
+        "Does not halt the whole decision: quarantines item 3 as a reality-drift finding, excludes it from the decision's scope, notes the carve-out in the run summary, and proceeds on the known-clean remainder",
+        "Names the rationale — halting on unrelated drift trains override-reflex, which launders bad decisions as reviewed — and does not proceed as if the contradiction weren't there"
+      ]
+    },
+    {
+      "id": "jarvis-vault-governance-006-selection-in-scope",
+      "mode": "selection",
+      "query": "A requirement for this sprint only exists as a Jira comment — is that decision valid, and which source wins here?",
+      "expected_behavior": [
+        "Classifies the request as IN SCOPE",
+        "Justifies it from the description: this skill owns which source is authoritative between vault and Jira, and the symptom of a decision born in a Jira comment"
+      ]
+    },
+    {
+      "id": "jarvis-vault-governance-007-selection-out-of-scope",
+      "mode": "selection",
+      "query": "Which Jira status should a story move to once its PR is open, and how do I link the PR to the issue?",
+      "expected_behavior": [
+        "Classifies the request as OUT OF SCOPE",
+        "Justifies it: the Jira workflow states and linking convention belong to jarvis-agency-jira-contract, which the description explicitly excludes"
+      ]
+    },
+    {
+      "id": "jarvis-vault-governance-008-mirror-faithful",
+      "query": "A repo's docs/_governance/SOURCE-OF-TRUTH.md was generated from the current law and has its own vault root, Jira key, quarantine list and generation date filled in. Is that mirror compliant?",
+      "expected_behavior": [
+        "PASS — the slots are the only legitimate difference, and check 21 (verify-mirror) masks them on both sides before comparing",
+        "Names the command that decides it rather than eyeballing the file: ./lint-platform.sh --verify-mirror {path}"
+      ]
+    },
+    {
+      "id": "jarvis-vault-governance-009-mirror-law-edited",
+      "query": "A repo's mirror has identical slots to the template, but one sentence in the pending-intent section now reads that drafted notes may be built on. They say it's just a clarification for their team. Verdict? Give the verdict, and say how the check arrives at it — what it compares, what the slot masking does and does not hide, and what it would print.",
+      "expected_behavior": [
+        "FAIL — the law text diverges; masking removes only the slots, so an edited law sentence survives into the comparison and is printed as a diverging line",
+        "Rejects the 'just a clarification' framing: a mirror is read-only and a rule change is a founder edit to the platform template with a bumped law_version, never a local edit"
+      ]
+    },
+    {
+      "id": "jarvis-vault-governance-010-mirror-slot-differs-only",
+      "query": "Two governed repos' mirrors differ from each other only in jira_project_key and quarantine_list. Does that mean one of them has drifted?",
+      "expected_behavior": [
+        "PASS for both — those are per-repo slots, and differing slot values are the intended design, not drift",
+        "Does NOT treat a raw diff against the template as the test; states that the comparison is slot-masked"
+      ]
+    },
+    {
+      "id": "jarvis-vault-governance-011-mirror-version-ahead",
+      "query": "A repo's mirror declares law_version 2.0.0 but the platform template is at 1.1.0. The team says they're ahead of us. What is the verdict?",
+      "expected_behavior": [
+        "FAIL — a mirror cannot outrank the law it is generated from, so a version ahead of the platform can only be a hand-edit",
+        "Distinguishes this from the behind case, which is a stale-mirror WARN that the next run regenerates rather than a hard failure"
+      ]
+    },
+    {
+      "id": "jarvis-vault-governance-012-jira-less-repo",
+      "query": "This repo is governed but has jira_project_key: UNSET. Walk me through what governance actually does here for a run that produces new scope.",
+      "expected_behavior": [
+        "Records intent in the vault with the provenance stamp (agency, pending) and honours pending-intent-inert — governance is fully active",
+        "Performs NO Jira writes and SKIPS both reconciliation triggers (periodic drift sweep and decision-point gate), because there is no execution ledger to reconcile against",
+        "Keeps code-contradicts-claim as a hard stop wherever code exists, and notes that setting the key later activates the Jira half automatically from that point"
+      ]
+    },
+    {
+      "id": "jarvis-vault-governance-013-delegated-intent-is-actionable",
+      "query": "Walk the 'Every run, in order' procedure literally, step by step, for this item. The scope note authorizing it is authored_by: agency, decision_type: scope, review: founder-delegated — set by a different agency role than the one that wrote it, under a standing grant the founder recorded for this class of small-tier work. Step 4 of the procedure is the one that decides. Do you act on it, or does it go in the founder-decision queue?",
+      "expected_behavior": [
+        "ACTS on it: founder-delegated is an ACTIONABLE state alongside founder-confirmed, so the item is not queued as inert — only review: pending is inert",
+        "Names the delegation explicitly in the run summary — recording that the founder pre-authorized this CLASS by a recorded standing grant, NOT that the founder reviewed this item",
+        "Confirms the delegation was legitimately set: a recorded standing grant covers the class AND the note was not marked by the role that authored it",
+        "Does NOT queue it into founder-decision-queue.md and does not treat step 4 as founder-confirmed-only"
+      ]
+    }
+  ]
+}

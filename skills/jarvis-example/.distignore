@@ -1,0 +1,6 @@
+# Paths excluded from the distribution bundle (the shareable -public.zip).
+# build-dist.sh reads this file as the single source of exclusions for this skill.
+# Baseline (*.DS_Store + this .distignore) is always added on top.
+
+reference/notes-internal.md
+_internal/

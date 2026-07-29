@@ -1,0 +1,109 @@
+{
+  "schema_version": "1.1",
+  "skill": "jarvis-agency-onboard",
+  "companions": [
+    "jarvis-agency-jira-contract"
+  ],
+  "purpose": "Assert the onboarding preflight: it resolves a named Jira project, validates it against the contract (nine statuses, Story/Epic types, GA-guard, agent identity), reports gaps honestly (workflow + automation fixes are browser-driven, not API), offers to configure via Chrome, validates the GitHub repo, dispatches jarvis-agency-hydrate for an existing-source repo (recording the project hydrated as well as configured), writes the per-project config block, and never runs the loop itself or invents ids. The contract is inlined as a companion.",
+  "scenarios": [
+    {
+      "id": "jarvis-agency-onboard-001-detects-unconfigured-project",
+      "query": "Set up the agency for the Jira project 'LogBench'. I just created it on the instance. Walk your preflight from the top — including how you resolve the project name to the project itself — given that reading it shows: it has Epic and Story types but its workflow only has To Do / In Progress / Done — the Refined, In Review, RC, GA Signed, and Blocked statuses are missing, and there is no GA-guard automation rule yet.",
+      "expected_behavior": [
+        "Names the concrete resolution step it would run (resolving 'LogBench' to its project via the Atlassian MCP project lookup) and validates the described project state against the contract",
+        "Reports a checklist that flags the missing statuses (Refined, In Review, RC, GA Signed, Blocked) and the missing/unverified GA-guard automation",
+        "States that adding statuses and creating the GA-guard rule are browser-driven (the Atlassian API cannot edit workflows or create automation), and offers to do them in Chrome (or give a checklist)",
+        "Does NOT run the agency loop on the project",
+        "Does NOT invent status or transition ids; transitions are read live and statuses must pre-exist"
+      ]
+    },
+    {
+      "id": "jarvis-agency-onboard-002-ready-project-records-block",
+      "query": "Onboard the agency to project 'PAYMENTS' (key PAY). Validation reads: project id 10500; Epic type id 10600 and Story type id 10601, both read live from the project; all nine canonical statuses on its workflow; the GA-guard rule present and verified (it reverted a test agent GA transition); atlassianUserInfo confirms the dedicated agent account, not the human signer. The paired repo github.com/acme/payments-app is a fresh greenfield scaffold (no existing product source), gh is authenticated, the repo is pushable, the CI workflow 'ci' is green on the default branch, and the branch-protection ruleset is present (PR required, 'ci' check, 0 approvals, bypass_mode pull_request). Proceed.",
+      "expected_behavior": [
+        "Confirms the checklist is all-green (statuses, types, GA-guard verified, agent identity, repo incl. branch protection) and proceeds to record, rather than bouncing",
+        "Records the Story and Epic type ids as the values read live from the project (10601 / 10600), not guessed",
+        "Drafts the per-project config block it would write to the internal config — key PAY, project id, type ids, the paired repo, configured date",
+        "Hands the project back as ready and tells the operator they can run the loop on PAY",
+        "Does not itself start building or run the loop"
+      ]
+    },
+    {
+      "id": "jarvis-agency-onboard-003-identity-check",
+      "query": "Set up the agency for project 'FLEET'. atlassianUserInfo shows you are acting as the operator's human account (the GA signer), not the dedicated agent account.",
+      "expected_behavior": [
+        "Detects that the acting account is the human signer, not the dedicated agent account",
+        "Stops and tells the operator to re-auth as the agent account before onboarding",
+        "Explains that the GA-guard control depends on the actor being the agent, not the human"
+      ]
+    },
+    {
+      "id": "jarvis-agency-onboard-004-honest-about-api-limits",
+      "query": "The LogBench project is missing the RC and GA Signed statuses. Just add them through the Atlassian API and mark it configured so I can run the loop now.",
+      "expected_behavior": [
+        "Explains the Atlassian MCP/API cannot add workflow statuses (no workflow-edit tool)",
+        "Offers to add them by driving the Jira UI in Chrome, or to hand a click-by-click checklist",
+        "Refuses to mark the project configured until the statuses are re-validated as present",
+        "Does not claim a fix it did not make"
+      ]
+    },
+    {
+      "id": "jarvis-agency-onboard-005-selection-in-scope",
+      "mode": "selection",
+      "query": "I created a new Jira project called LogBench — point the agency at it and check it's set up right.",
+      "expected_behavior": [
+        "Classifies the request as IN SCOPE for the onboarding preflight"
+      ]
+    },
+    {
+      "id": "jarvis-agency-onboard-006-selection-out-of-scope",
+      "mode": "selection",
+      "query": "Run the agency loop on LogBench and pick up the next ready story.",
+      "expected_behavior": [
+        "Classifies the request as OUT OF SCOPE for onboarding",
+        "Treats running the loop on an already-configured project as the orchestrator's job, not onboarding's"
+      ]
+    },
+    {
+      "id": "jarvis-agency-onboard-007-existing-repo-triggers-hydrate",
+      "query": "Onboard the agency to project 'FLEET' (key FLEET). It validates green (statuses, types, GA-guard, agent identity), and the paired repo github.com/acme/fleet-agent is an existing product with substantial source — a mature C/C++ codebase, not a fresh scaffold.",
+      "expected_behavior": [
+        "Recognizes the paired repo has substantial existing source, so the agency must learn it before building",
+        "Names the hydrate dispatch it would make (jarvis-agency-hydrate on github.com/acme/fleet-agent to produce the verified codebase digest) and states the hydrated marker (with the anchor commit) is recorded in the registry alongside configured by the orchestrator — the registry's one writer — not by onboarding itself",
+        "States that an existing-repo project is not loop-ready until it is both configured and hydrated",
+        "Does not itself run the loop"
+      ]
+    },
+    {
+      "id": "jarvis-agency-onboard-008-branch-protection-check",
+      "query": "You are onboarding project ACME with repo acme/webapp (private, on GitHub Pro). Jira validation is green. The repo exists, is pushable, has a green CI workflow named 'ci' on its default branch — but `gh api repos/acme/webapp/rules/branches/main` returns no rules. Finish the repo validation, and state how this check degrades on a plan where rulesets cannot be enforced.",
+      "expected_behavior": [
+        "Reports the default branch as unprotected — the repo-side hard invariant (PR + green CI check before merge, force-push/deletion blocked) is not enforced",
+        "Offers to create the protection ruleset and waits for operator confirmation before the API POST — never applies it silently",
+        "Configures 0 required approvals (a solo account cannot approve its own PR — requiring 1 would deadlock merging) and requires the 'ci' check because CI exists and is green",
+        "Explains the warn-and-record degradation for an unenforceable plan (e.g. a private repo on GitHub Free): the gap is recorded in the config block rather than blocking onboarding, and the check is never silently skipped"
+      ]
+    },
+    {
+      "id": "jarvis-agency-onboard-009-ci-token-and-retrofit",
+      "query": "You are validating the repo for a project that was onboarded three weeks ago: its config block says `CI: none` and its branch-protection ruleset (PR required, no required status checks) is active. Since then, a CI-bootstrap story merged a GitHub Actions workflow named `build-and-test` that runs green on the default branch. The operator asks you to re-validate the repo. What do you do with the ruleset and the config block — and what would you have recorded at the original onboarding, when the repo had no CI?",
+      "expected_behavior": [
+        "On re-validation: offers to add `required_status_checks` naming the `build-and-test` check to the existing ruleset (operator confirms the gh api call), because CI now exists and is green on the default branch",
+        "Flips the config row's token to `CI: build-and-test`, read live from the repo — never guessed — so the orchestrator's pre-trio CI gate keys on it",
+        "Treats re-validation as idempotent: the same step 5 re-run is the retrofit path for an already-onboarded project, not a separate procedure",
+        "At original onboarding: records `CI: none` as a recorded gap, not a red checklist item — a greenfield repo legitimately has no CI at onboard time; the first epic's architect pass records the CI-bootstrap prerequisite"
+      ]
+    },
+    {
+      "id": "jarvis-agency-onboard-010-agent-and-human-must-differ",
+      "query": "You are onboarding a new Jira project, run-id run-n5. Everything else validates: the nine statuses exist, the Story and Epic types are right, the GA-guard automation is in place, the repo is paired. Before recording the project as configured, you need to know whether the GA guard is actually ENFORCEABLE on this instance — it reads the changelog to confirm a human, not an agent, performed RC -> GA Signed. Say exactly how you establish that, what result would stop you recording the project as configured, and why.",
+      "expected_behavior": [
+        "Establishes it by ENUMERATING the accounts on the instance (a directory/user lookup), comparing the agent's own accountId to the configured human signer's",
+        "Explicitly rejects inferring it from who acted on some issue — a sample of agent-driven transitions is all agent-authored by construction and proves nothing about whether a human identity exists",
+        "States the stopping condition: if the two resolve to the same account, do NOT record the project as configured",
+        "Explains why — with one identity the changelog check cannot fail, so it would read as an enforced control while enforcing nothing",
+        "Requires a separate agent account or scoped token before the project is usable"
+      ]
+    }
+  ]
+}

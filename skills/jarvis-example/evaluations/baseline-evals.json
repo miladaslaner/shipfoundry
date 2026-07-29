@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "skill": "jarvis-example",
+  "purpose": "Two complementary modes. APPLY mode (001-003) force-loads the body and requires the model to apply the conventions, not recite them: 001 critiques a bad description, 002 is an edge-adjacent does-not-trigger, 003 checks the internal-content rule. SELECTION mode (004-005, \"mode\": \"selection\") feeds the model ONLY the name + description and asks in-scope/out-of-scope — testing trigger SELECTION directly (would Claude pick this skill from its description alone), which force-load cannot exercise.",
+  "scenarios": [
+    {"id": "jarvis-example-001-apply-description-rules", "query": "A teammate proposed this skill description: 'Helps you with skills and does skill stuff.' Per this repo's conventions, what is wrong with it and how should it be rewritten?", "expected_behavior": ["Flags that it is not third person and does not open with \"Use when …\"", "Flags the missing \"Does not trigger\" clause", "Notes it describes no specific triggers or symptoms — too vague to route on — rather than just calling it 'unclear'"]},
+    {"id": "jarvis-example-002-edge-adjacent-does-not-trigger", "query": "Write the full SKILL.md body for my new database-migration skill.", "expected_behavior": ["Does NOT author the domain skill from this example — recognises this skill is a template/reference, not a domain-content generator", "Redirects to ./new-skill.sh and the new-skill playbook as the way to start a real skill"]},
+    {"id": "jarvis-example-003-internal-content", "query": "Where do I keep notes that must never ship in the distribution bundle?", "expected_behavior": ["Names the *-internal.md / _internal convention", "Ties it to the skill's .distignore exclusion, and that lint check 2 fails the build if such content leaks into a dist zip"]},
+    {"id": "jarvis-example-004-selection-in-scope", "mode": "selection", "query": "Show me how a skill in this repo is structured before I write my own.", "expected_behavior": ["Classifies the request as IN SCOPE", "Justifies it from the description: this skill is a structural worked example for authoring a new skill"]},
+    {"id": "jarvis-example-005-selection-out-of-scope", "mode": "selection", "query": "Draft our Q4 product launch announcement.", "expected_behavior": ["Classifies the request as OUT OF SCOPE", "Justifies it: the description is about skill structure/authoring, not marketing or content writing"]}
+  ]
+}

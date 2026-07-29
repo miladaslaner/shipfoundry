@@ -1,0 +1,89 @@
+{
+  "schema_version": "1.1",
+  "skill": "jarvis-agency-design",
+  "companions": [
+    "jarvis-agency-jira-contract"
+  ],
+  "purpose": "Assert the design skill: it specifies a UI story's screen and all states (loading, empty, error, edge), responsive and accessibility behaviour, against the project tokens; it refuses to design only the happy path or invent tokens; it writes to the Design lane and never builds or transitions status. The contract is inlined as a companion.",
+  "scenarios": [
+    {
+      "id": "jarvis-agency-design-001-happy-path",
+      "query": "You are the design subagent for STORY-100, a UI story. [PASTE STORY-100] Produce the design.",
+      "fixture": "fixtures/jarvis-agency-design-001.md",
+      "expected_behavior": [
+        "Specifies the default plus the loading, empty, error, and edge states, mapped to the acceptance criteria",
+        "Specifies responsive breakpoints and accessibility (focus order, contrast, touch targets)",
+        "Uses the project design tokens rather than inventing new ones, and writes to the Design lane",
+        "Does not implement the frontend or transition status"
+      ]
+    },
+    {
+      "id": "jarvis-agency-design-002-never-happy-path-only",
+      "query": "Just design the default screen for STORY-100 quickly so the builder can start; skip the loading and error states, we'll add them later.",
+      "expected_behavior": [
+        "Refuses to deliver a happy-path-only design",
+        "Insists on specifying the loading, empty, and error states up front",
+        "States an omitted state ships a blank screen on failure"
+      ]
+    },
+    {
+      "id": "jarvis-agency-design-005-never-invents-tokens",
+      "query": "The project tokens don't include a dark-enough shade for the error banner on STORY-100. Just pick a close hex so the builder can proceed.",
+      "expected_behavior": [
+        "Refuses to introduce a colour that is not in the project token set",
+        "Proposes extending the token set or flags the gap to the PM rather than inventing an ad-hoc hex",
+        "Keeps the design on the project tokens"
+      ]
+    },
+    {
+      "id": "jarvis-agency-design-003-selection-in-scope",
+      "mode": "selection",
+      "query": "Design the screen and all its states for STORY-100's UI.",
+      "expected_behavior": [
+        "Classifies the request as IN SCOPE for the design skill"
+      ]
+    },
+    {
+      "id": "jarvis-agency-design-004-selection-out-of-scope",
+      "mode": "selection",
+      "query": "Build the React component and wire up the API calls for STORY-100.",
+      "expected_behavior": [
+        "Classifies the request as OUT OF SCOPE for the design skill",
+        "Treats implementing the component as jarvis-agency-build-frontend's job"
+      ]
+    },
+    {
+      "id": "jarvis-agency-design-007-adopt-and-reproduce-prototype",
+      "query": "You are the design skill for STORY-70 (a UI story), run-id run-d1. The epic carries a `Prototype` heading comment: a founder-built high-fidelity prototype on his own design system, ARTIFACT-AUTHORED-BY: human, with the expectation the build matches it. This is a greenfield product. Produce the design.",
+      "expected_behavior": [
+        "Runs adopt-and-reproduce: reproduces the prototype's screens/components faithfully as the authoritative Design lane rather than redesigning them",
+        "Establishes the project's design tokens FROM the prototype's design system (greenfield) and records DESIGN-TOKEN-AUTHORITY: prototype",
+        "Fills only the missing states (loading/empty/error/edge), responsive breakpoints, and accessibility — in the prototype's own tokens and components, not a parallel look",
+        "Does not invent a third design system or re-token what the founder expects reproduced",
+        "Notes fidelity to the prototype is an acceptance criterion; does not build or transition status"
+      ]
+    },
+    {
+      "id": "jarvis-agency-design-006-existing-product-token-conflict",
+      "query": "You are the design skill for STORY-71 (a UI story) on an EXISTING product. The epic carries a founder `Prototype` on design system X, but the codebase digest's design-system section shows the product is built on a materially different system Y. Produce the design.",
+      "expected_behavior": [
+        "Detects the prototype's design system materially differs from the product's already-hydrated tokens",
+        "Does not silently override either system with the other",
+        "Writes DESIGN-TOKEN-AUTHORITY: conflict and surfaces the mismatch to the founder (which system governs?), stopping the UI story until it is resolved",
+        "Does not proceed to reproduce the prototype against the wrong token set"
+      ]
+    },
+    {
+      "id": "jarvis-agency-design-008-resolves-brief-pointer-to-vault-note",
+      "query": "You are the design skill for STORY-212, a UI story on a greenfield product. PRODUCE the design — the screens, all their states, the responsive behaviour, and the accessibility specification. Open with a one-line provenance note: which document you designed against and how you located it.\n\nThis is an offline exercise with no filesystem, no repo, and no Jira — do not attempt any writes or tool calls; write out the content you would produce instead. Everything you can see is reproduced below.\n\n--- Jira issue STORY-212 ---\nSummary: Export review screen\nAcceptance criteria: the officer can review an export before downloading it.\nComment:\n'## Requirements Brief — {vault_root}/intent/EPIC-140-scope.md\nSummary: review screen for power users. Desktop only. Keep it dense.'\n(No Prototype lane on this issue.)\n\n--- Repo files ---\n`docs/_governance/repo-config.md`:\n'vault_root: product-vault\njira_project_key: ACME\nquarantine_list: []'\n\n`product-vault/intent/EPIC-140-scope.md`:\n'---\nauthored_by: founder\ndecision_type: scope\nreview: founder-confirmed\nparent: product-vault/intent/EPIC-140-requirement.md\n---\nUsers: compliance officers at regulated customers. A material share work on a tablet during on-site audits, and a named design partner uses a screen reader full time.\nScope: the officer reviews the export's manifest (row count, checksum, fleet) before downloading, and can cancel an in-flight export.\nNon-goals: no desktop-only interaction that has no tablet or keyboard equivalent; no information conveyed by colour alone.\nFailure modes: a partial export fails closed — the screen must never present a half-written file as complete.'",
+      "expected_behavior": [
+        "Treats the issue's ## Requirements Brief comment as a pointer and designs against the vault scope note it names, not the comment's summary",
+        "Resolves vault_root from the repo-config (product-vault) rather than assuming docs/",
+        "Designs for the note's users — tablet breakpoint and full screen-reader/keyboard support — rather than the summary's 'power users, desktop only, keep it dense'",
+        "Where the comment summary and the note disagree, prefers the note outright rather than merging, averaging, or splitting the difference between desktop-only and tablet",
+        "Honours the note's non-goals: no desktop-only interaction without a tablet/keyboard equivalent, and no status conveyed by colour alone",
+        "Specifies the states beyond the happy path, including the failed/partial-export state the note requires never to read as complete"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+# OS / editor cruft
+.DS_Store
+*.swp
+
+# Personal, per-machine Claude Code workspace permissions (not shared)
+.claude/settings.local.json
+
+# Truly-confidential, never-commit content. Goes in an _internal/ directory.
+# (Note: keeping internal content OUT OF THE DISTRIBUTION BUNDLE is a separate
+# concern handled by each skill's .distignore — that excludes *-internal.md files
+# and _internal/ paths from the shareable -public.zip while still allowing them to
+# be tracked in this source repo. Use _internal/ here only for content that must
+# not even be committed.)
+**/_internal/
+
+# eval-runner per-skill logs (local run artefacts, never committed)
+.eval-logs/

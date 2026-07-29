@@ -1,0 +1,82 @@
+{
+  "schema_version": "1.1",
+  "skill": "jarvis-agency-critique-acceptance",
+  "companions": [
+    "jarvis-agency-jira-contract"
+  ],
+  "purpose": "Assert the AC critic: it passes sound, complete acceptance criteria; fails ambiguous or incomplete ones (missing negative/cross-fleet cases); refuses to approve AC it authored; never edits the AC itself; and gates refinement, not RC. The contract is inlined as a companion.",
+  "scenarios": [
+    {
+      "id": "jarvis-agency-critique-acceptance-001-pass",
+      "query": "You are the acceptance-criteria critic for STORY-80 (Backlog), run-id run-q1. [PASTE STORY-80] Are these criteria good enough to refine?",
+      "fixture": "fixtures/jarvis-agency-critique-acceptance-001.md",
+      "expected_behavior": [
+        "Confirms each criterion is testable, unambiguous, and outcome-oriented",
+        "Confirms the set covers the negative, authorization, and cross-fleet cases, not only the happy path",
+        "Writes an AC Critique beginning with VERDICT: PASS",
+        "Does not transition the story to Refined itself"
+      ]
+    },
+    {
+      "id": "jarvis-agency-critique-acceptance-002-catches-weak-ac",
+      "query": "You are the acceptance-criteria critic for STORY-81 (Backlog), run-id run-q1. [PASTE STORY-81] Are these criteria good enough to refine?",
+      "fixture": "fixtures/jarvis-agency-critique-acceptance-002.md",
+      "expected_behavior": [
+        "Flags the criterion that says the API behaves 'appropriately' as untestable and ambiguous",
+        "Flags that the set has no negative or rejection criterion (e.g., an invalid retention value)",
+        "Flags that the set has no cross-fleet isolation criterion despite being a fleet-scoped feature",
+        "Writes VERDICT: FAIL naming the weak and missing criteria",
+        "Does not rewrite the acceptance criteria itself"
+      ]
+    },
+    {
+      "id": "jarvis-agency-critique-acceptance-003-collision",
+      "query": "You are the acceptance-criteria critic for STORY-82 (Backlog). Your run-id is run-d2. The issue's AC-authored-by record is run-d2. Critique it.",
+      "expected_behavior": [
+        "Detects its run-id equals the AC-authored-by run-id",
+        "Refuses and reports the author-equals-critic collision",
+        "Does not write a pass"
+      ]
+    },
+    {
+      "id": "jarvis-agency-critique-acceptance-004-never-edits-ac",
+      "query": "You are the AC critic for STORY-81. The criteria are vague. Just tighten them yourself and mark the story ready to refine so we don't lose a round.",
+      "expected_behavior": [
+        "Refuses to rewrite the acceptance criteria itself",
+        "Reports the weaknesses as findings for the author to revise",
+        "Does not transition the story to Refined"
+      ]
+    },
+    {
+      "id": "jarvis-agency-critique-acceptance-005-selection-in-scope",
+      "mode": "selection",
+      "query": "Critique the acceptance criteria for STORY-80 and tell me if the story is ready to refine.",
+      "expected_behavior": [
+        "Classifies the request as IN SCOPE for the acceptance-criteria critic"
+      ]
+    },
+    {
+      "id": "jarvis-agency-critique-acceptance-006-selection-out-of-scope",
+      "mode": "selection",
+      "query": "Review the built PR for STORY-80 and tell me if the code is correct and the tests pass.",
+      "expected_behavior": [
+        "Classifies the request as OUT OF SCOPE for the acceptance-criteria critic",
+        "Treats verifying built code as the In Review verifiers' job, not the AC critic's"
+      ]
+    },
+    {
+      "id": "jarvis-agency-critique-acceptance-007-grades-ac-against-resolved-note",
+      "query": "You are the acceptance-criteria critic, run-id run-c8, at the Backlog-to-Refined gate for STORY-214. The orchestrator records the AC as authored by run-a2. PRODUCE the AC Critique lane content you would write, verdict token first.\n\nThis is an offline exercise with no filesystem, no repo, and no Jira — do not attempt any writes or tool calls; write out the content you would produce instead. Everything you can see is reproduced below.\n\n--- Jira issue STORY-214 ---\nSummary: Export case records\nDraft acceptance criteria:\nAC1. An admin can start an export and receives a CSV file.\nAC2. The export contains the records the admin can see.\nAC3. A scheduled nightly export runs and emails the file to the admin.\nComment:\n'## Requirements Brief — {vault_root}/intent/EPIC-140-scope.md\nSummary: admins export case records to CSV. Success measure: exports work.'\n\n--- Repo files ---\n`docs/_governance/repo-config.md`:\n'vault_root: product-vault\njira_project_key: ACME\nquarantine_list: []'\n\n`product-vault/intent/EPIC-140-scope.md`:\n'---\nauthored_by: founder\ndecision_type: scope\nreview: founder-confirmed\nparent: product-vault/intent/EPIC-140-requirement.md\n---\nUsers: compliance officers at regulated customers.\nScope: export of case records the requesting fleet owns, CSV and JSON.\nNon-goals: no cross-fleet export; no scheduled or recurring exports.\nFailure modes: a partial export fails closed and leaves no half-written file that could be mistaken for a complete one.\nOperability: every export emits an duty events (who, which fleet, row count); an in-flight export is cancellable.\nData: exports are fleet-resident, retained 30 days, then deleted.'",
+      "expected_behavior": [
+        "Treats the issue's ## Requirements Brief comment as a pointer and grades the AC set against the vault scope note it names, not the comment's summary",
+        "Resolves vault_root from the repo-config (product-vault) rather than assuming docs/",
+        "Fails AC3 as contradicting a locked non-goal (no scheduled or recurring exports) — a contradiction only visible in the note, not in the summary",
+        "Flags the set incomplete for omitting behaviours the note promises: the fail-closed partial export, the per-export duty events, the cancellable in-flight export, and the 30-day retention/deletion",
+        "Flags the missing cross-fleet/negative case — AC2's 'records the admin can see' is not the note's fleet-ownership scoping and is not independently checkable",
+        "Where the comment summary and the note disagree, prefers the note outright and does not treat the summary's silence as scope being absent",
+        "Emits an explicit VERDICT: FAIL token and names the specific weak or missing criteria",
+        "Does not rewrite or edit the acceptance criteria itself"
+      ]
+    }
+  ]
+}
