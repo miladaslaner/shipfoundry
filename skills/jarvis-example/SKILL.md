@@ -1,11 +1,12 @@
 ---
 name: jarvis-example
-description: Worked reference example for the Jarvis Skills Platform. Use when you want to see how a skill in this repo is structured before authoring your own — the frontmatter shape, the SKILL.md body conventions, progressive disclosure into reference/ files, the evaluations stub, and the .distignore that keeps internal-only content out of the distribution bundle. Copy this folder (or run ./new-skill.sh) as the starting point for a new skill. Triggers on phrases like "show me the example skill", "how is a Jarvis skill structured", "scaffold a skill like the example". Does not trigger for real domain work — replace this skill with your own content before shipping.
-version: 1.0.0
+description: Worked reference example for shipfoundry. Use when you want to see how a skill in this repo is structured before authoring your own — the frontmatter shape, the SKILL.md body conventions, progressive disclosure into reference/ files, the evaluations stub, and the .distignore that keeps internal-only content out of the distribution bundle. Copy this folder (or run ./new-skill.sh) as the starting point for a new skill. Triggers on phrases like "show me the example skill", "how is a shipfoundry skill structured", "scaffold a skill like the example". Does not trigger for real domain work — replace this skill with your own content before shipping.
+version: 1.0.1
 owner: Platform maintainer
-updated: 2026-06-26
-source: Reference example shipped with the Jarvis Skills Platform starter kit.
+updated: 2026-07-29
+source: Reference example shipped with the shipfoundry starter kit.
 changelog: |
+  1.0.1 — Platform name in the description and source updated to shipfoundry; the example-skill trigger phrase follows. No change to what the skill demonstrates.
   1.0.0 — Initial example skill shipped with the starter kit. Demonstrates frontmatter, body conventions, a reference file with a table of contents, the evaluations stub, and internal-content handling via .distignore.
 ---
 
