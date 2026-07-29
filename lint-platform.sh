@@ -1251,7 +1251,7 @@ check_absolute_refusals() {
 }
 
 # =============================================================================
-# CHECK 29 — Eval receipt for behaviour-level version bumps  (WARN; FAIL under --strict)
+# CHECK 29 — Eval receipt for behaviour-level version bumps  (NOTE; never gates)
 # CLAUDE.md says to run ./eval-runner.sh when behaviour changed, and nothing enforced it — a
 # memory-enforced invariant, the exact shape this platform condemns everywhere else. It matters:
 # in the 2026-07-21 sweep the BEHAVIOURAL gate found 7 of 7 real defects and the structural gates
