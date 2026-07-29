@@ -39,7 +39,7 @@
     {"skill": "jarvis-agency-verify-artifact", "version": "0.3.1", "zip": "jarvis-agency-verify-artifact-v0.3.1-public.zip", "sha256": "392936c417db03431d5195d3bc5c3da875cd33ab980b462ec44e0794f86b7213", "bytes": 12987},
     {"skill": "jarvis-agency-verify-detection", "version": "0.1.0", "zip": "jarvis-agency-verify-detection-v0.1.0-public.zip", "sha256": "5663ab76d1651c0815fb8f2b9e4eb8c0c888495bf2b12f18b99caabc265311e8", "bytes": 7409},
     {"skill": "jarvis-agency-watch-cost", "version": "0.2.1", "zip": "jarvis-agency-watch-cost-v0.2.1-public.zip", "sha256": "7d39035fd11c16254424f3e5b82d6a68fe165845ac3289a95916e9d4c49f97f9", "bytes": 5936},
-    {"skill": "jarvis-example", "version": "1.0.0", "zip": "jarvis-example-v1.0.0-public.zip", "sha256": "bd72288faff8143927e404902ab039615dc7f2f6a30a75f4c7cc034c0471c4e0", "bytes": 4787},
+    {"skill": "jarvis-example", "version": "1.0.1", "zip": "jarvis-example-v1.0.1-public.zip", "sha256": "d2e81af63351c4ef58c91cf9b819509f11679eeb385ebb35bedc8d90ad0644a1", "bytes": 4834},
     {"skill": "jarvis-vault-governance", "version": "1.2.2", "zip": "jarvis-vault-governance-v1.2.2-public.zip", "sha256": "7897838d8bba072913e9463af8529361bd3918208e7b85989a4b3330b36ab500", "bytes": 13501}
   ]
 }
