@@ -144,12 +144,12 @@ Reflexes: read first · reuse before creating · propose before implementing · 
 ├── tests/            # dependency-free test suite: run-tests.sh runner + cases/*.sh (one per feature)
 ├── lib/internal-convention.sh # single source of the internal-only content convention (INTERNAL_RE)
 ├── install-hooks.sh   # wires the lint into .git/hooks/pre-commit
-├── hooks/             # pre-commit + Stop-hook lint runners
+├── hooks/             # pre-commit + Stop-hook lint runners; dispatch-guard.sh (read-receipt guard)
 ├── ci/run-checks.sh   # CI entrypoint (lint --strict)
 ├── .github/workflows/lint.yml # CI wiring (GitHub Actions) — runs ci/run-checks.sh
 └── .claude/
     ├── commands/      # /new-skill /improve-skill /new-workbench
-    └── settings.json  # Stop hook → auto-runs the lint gate
+    └── settings.json  # Stop hook → auto-runs the gates; PreToolUse → dispatch read-receipt guard
 ```
 
 Personal install: symlink the source folders into `~/.claude/skills/` so edits propagate immediately to Claude Code sessions:
