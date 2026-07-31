@@ -1,1 +1,16 @@
-{}
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR:-.}/hooks/stop-lint.sh\"",
+            "timeout": 120,
+            "statusMessage": "Running platform gates (lint + secret scan)"
+          }
+        ]
+      }
+    ]
+  }
+}

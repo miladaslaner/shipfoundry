@@ -136,7 +136,7 @@ Reflexes: read first · reuse before creating · propose before implementing · 
 ├── dist/              # versioned distribution zips + MANIFEST.json (built by build-dist.sh)
 ├── config/            # committed sanitized registry slice (agency-registry) + stated-defaults — lets lint checks 13/17/23 run in CI too
 ├── docs/platform/     # the platform playbooks + governance + architecture
-├── lint-platform.sh   # the structural gate (36 checks) — the close-out checklist (also: --verify-mirror <path>)
+├── lint-platform.sh   # the structural gate (37 checks) — the close-out checklist (also: --verify-mirror <path>)
 ├── scan-secrets.sh    # the content gate — refuses secrets + PII (allowlist: .secretignore)
 ├── build-dist.sh      # builds dist zips from each .distignore + the manifest
 ├── new-skill.sh       # scaffolds a new skill correct-by-construction

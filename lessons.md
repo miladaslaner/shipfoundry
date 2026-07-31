@@ -315,3 +315,35 @@ still pass it?", ~$1–2 per change instead of ~$30, and it would have caught si
 Check 29 makes the behavioural run itself auditable: a minor/major bump with no recorded eval receipt
 is a warning. What none of this covers is a skill that is subtly *wrong* rather than subtly
 *refusing* — that still needs the full gate and a human reading the output.
+
+---
+
+### 2026-07-31 — The repo documented a safety net it did not have
+
+**What happened.** `CLAUDE.md` has told every session since the initial public release that
+"a Stop hook also runs [the lint] automatically — see `.claude/settings.json`", and the project
+structure tree listed `settings.json  # Stop hook → auto-runs the lint gate`. That file was `{}`.
+`hooks/stop-lint.sh` existed, was executable, worked correctly when invoked — and was wired to
+nothing. The automatic gate the docs promised had never once run. `./lint-platform.sh --strict`
+exited 0 throughout, because no check compared the claim against the file.
+
+**Root cause.** The hook body was stripped by the public-release scrub (the file is `{}` in the
+initial public commit) while the two sentences describing it were not. Nobody re-read them together
+afterwards, and nothing could: a *claim about a control* was the one kind of assertion the platform's
+own 36 checks did not cover. This is the [[produced-but-never-read]] family again — a claimed reader
+that does not read — but pointed at the platform's own safety net rather than at a skill, which is
+why it survived three lessons about the same shape. Note the second-order cost: the docs' promise
+made the missing control *invisible*, because every session that read CLAUDE.md believed the gate
+was already running.
+
+**Rule.** A document may not promise a mechanical control without the control existing. When a scrub,
+a rename, or a refactor touches a hook, a gate, or any other enforcement artifact, the change's scope
+includes every doc that describes it — and if the description is load-bearing, it needs a check, not
+a re-read.
+
+**Mechanically checkable → built.** Lint **check 37** now closes both directions: a doc promising a
+Stop hook must find one wired in `.claude/settings.json`, and a wired hook must resolve to a file
+that exists and is executable (a rename or a lost `+x` silently disarms a hook while lint stays
+green). It ships adversarially tested — unwiring the hook reproduces the original failure and names
+`CLAUDE.md:28` and `:152` by line. Deliberately narrow: it resolves `hooks/*.sh` references, not
+arbitrary shell, so a hook invoking something exotic is out of its reach.
