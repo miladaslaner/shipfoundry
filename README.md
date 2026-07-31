@@ -16,7 +16,7 @@ shipfoundry's answer is enforced discipline, not good intentions:
 - **A producer can never verify its own work.** Every story is built by one agent and judged by
   three independent ones — code review, an independent test re-run, and an adversarial security
   pass. Identity collisions are detected mechanically, not promised.
-- **37 executable checks** gate the platform itself (`lint-platform.sh`). Conventions that are
+- **38 executable checks** gate the platform itself (`lint-platform.sh`). Conventions that are
   merely written down drift; these exit non-zero.
 - **Evaluations are recorded, not optional.** Every skill ships a behavioural baseline, and a skill
   whose behaviour changed without a recorded eval run is flagged by the lint. The run itself makes
@@ -50,7 +50,7 @@ them.
   table of status × stack label, gate predicates, a human-only edge into GA. It is not compiled
   into node objects. It is a markdown table, re-read every pass, and the state lives in a system
   you can open in a browser and edit by hand.
-- **A harness, but pointed at authoring.** The 37 checks, the secret scan, the eval runner — none
+- **A harness, but pointed at authoring.** The 38 checks, the secret scan, the eval runner — none
   of them run during an agency loop. They gate how skills are *written*, not how they *execute*.
 
 **What it actually is: externalized-state engineering.** Most frameworks keep the graph and its
@@ -87,7 +87,7 @@ one. Building your own crew means adding a workbench with its own prefix — `bu
 `eval-runner.sh`, and `scan-secrets.sh` are prefix-agnostic, while the agency-specific lint checks
 name `jarvis-agency-*` directly and self-skip when it isn't there.
 
-**The gate suite.** `lint-platform.sh` (37 checks), `scan-secrets.sh` (secret/PII content gate),
+**The gate suite.** `lint-platform.sh` (38 checks), `scan-secrets.sh` (secret/PII content gate),
 `eval-runner.sh` (behavioural baselines), plus a dependency-free test suite. All wired into
 pre-commit, a session-stop hook, and CI.
 

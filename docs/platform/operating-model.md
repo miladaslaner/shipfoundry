@@ -37,7 +37,7 @@ Almost everything is one of four. Each has a **process** (the playbook you follo
 
 | Tool | Enforces |
 |---|---|
-| `lint-platform.sh` | **structural** invariants (37 checks) — run before declaring any edit done; `--strict` for CI; `--versions` for the authoritative version table |
+| `lint-platform.sh` | **structural** invariants (38 checks) — run before declaring any edit done; `--strict` for CI; `--versions` for the authoritative version table |
 | `eval-runner.sh` | **behavioural** baselines — replays each skill's `baseline-evals.json` against the model (run outside a Claude Code session) |
 | `build-dist.sh` | builds dist zips from each `.distignore` (single source) + regenerates `dist/MANIFEST.json` |
 | `install-hooks.sh` / `hooks/` / `ci/` | activate the lint as a git pre-commit hook + CI once the repo is under git |

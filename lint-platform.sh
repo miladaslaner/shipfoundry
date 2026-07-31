@@ -1574,6 +1574,46 @@ check_documented_hooks() {
 }
 
 # =============================================================================
+# CHECK 38 — Contract marker -> orchestrator parity  (FAIL)
+# A control marker is only worth writing if the pass that must ACT on it recognizes the name. The
+# contract defines the marker; the orchestrator is the consumer that reads and writes it. Adding one
+# to the contract alone leaves a signal nothing acts on; adding it to the orchestrator alone leaves a
+# signal no other skill can rely on. Same shape as the 2026-07-21 lesson — a rule changed where it is
+# STATED and not where it is CONSUMED — applied to the one vocabulary both files share, and it is the
+# drift the READ-RECEIPT change would have caused had it landed in one file.
+# DIRECTIONAL ON PURPOSE: contract -> orchestrator. The reverse asymmetry is legitimate and expected
+# (the orchestrator carries operational markers such as PRODUCED-BY and VERIFICATION-ROUND-COUNT that
+# the contract never defines), so requiring identical sets would fail on correct state.
+check_marker_parity() {
+  section "38. Contract marker -> orchestrator parity"
+  local c="$ROOT/skills/jarvis-agency-jira-contract" o="$ROOT/skills/jarvis-agency-orchestrate"
+  if [ ! -f "$c/SKILL.md" ] || [ ! -f "$o/SKILL.md" ]; then
+    pass "skipped — the agency contract/orchestrator pair is not installed in this tree"; return
+  fi
+  # POSIX classes, not a bracket range: the range spelling self-matches as a project key (check 31).
+  # TWO forms, because the first draft of this check passed VACUOUSLY on the very marker it was
+  # written for: backticked in prose (`NAME:`) AND bare at the start of a line, which is how a marker
+  # is actually written in the fenced example that defines it. Matching only the prose form meant a
+  # marker could be fully specified in a code block and stay invisible to the parity check.
+  local re='(`|^)[[:upper:]][[:upper:]-]{3,}:'
+  local cset oset missing
+  # `MARKER` itself is the generic prose word for the convention ("grep-able `MARKER:` prefixes"),
+  # not the name of any marker — excluded, or every file discussing the convention self-reports.
+  cset=$(cat "$c/SKILL.md" "$c"/reference/*.md 2>/dev/null | grep -oE "$re" | tr -d '`:' | grep -vx 'MARKER' | sort -u)
+  oset=$(cat "$o/SKILL.md" "$o"/reference/*.md 2>/dev/null | grep -oE "$re" | tr -d '`:' | grep -vx 'MARKER' | sort -u)
+  missing=$(comm -23 <(printf '%s\n' "$cset") <(printf '%s\n' "$oset"))
+  if [ -n "$missing" ]; then
+    local m
+    while IFS= read -r m; do
+      [ -n "$m" ] || continue
+      fail "contract defines marker '$m:' but jarvis-agency-orchestrate never names it — a signal nothing acts on"
+    done <<< "$missing"
+    return
+  fi
+  pass "every marker the contract defines is named by the orchestrator ($(printf '%s\n' "$cset" | grep -c . ) marker(s); orchestrator-only markers are legitimately asymmetric)"
+}
+
+# =============================================================================
 # CHECK 32 — Stated check-count parity  (FAIL)
 # Count drift has recurred THREE times, and at the moment this check was written FOUR different
 # live values were in the tree at once: README/CLAUDE said 30, governance-model said 30,
@@ -1931,6 +1971,7 @@ check_confidential_docs
 check_private_doc_prose
 check_dist_content
 check_documented_hooks
+check_marker_parity
 
 section "Summary"
 printf '  %s%d FAIL%s   %s%d WARN%s\n' "$([ "$FAILS" -gt 0 ] && echo "$R" || echo "$G")" "$FAILS" "$X" \
