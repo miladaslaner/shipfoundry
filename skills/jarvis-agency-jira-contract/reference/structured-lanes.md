@@ -91,8 +91,8 @@ from, because it left no trace to learn from. The receipt is that trace.
 
 The orchestrator **already** resolves the owning vault intent note at the Backlog intent gate. This
 makes that resolution leave evidence instead of dissolving into its context. Like the producer
-terminal report above, **the receipt rides in the dispatch brief**, so no per-producer skill edit is
-needed — a producer inherits it and adds no rule of its own.
+terminal report above, the `READ-RECEIPT:` marker **rides in the dispatch brief**, so no per-producer
+skill edit is needed — a producer inherits it and adds no rule of its own.
 
 ```
 READ-RECEIPT: {vault-note-path}@{review-state} · {ISSUE}#{comment-id}

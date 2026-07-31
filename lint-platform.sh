@@ -1591,7 +1591,11 @@ check_marker_parity() {
     pass "skipped — the agency contract/orchestrator pair is not installed in this tree"; return
   fi
   # POSIX classes, not a bracket range: the range spelling self-matches as a project key (check 31).
-  local re='`[[:upper:]][[:upper:]-]{3,}:'
+  # TWO forms, because the first draft of this check passed VACUOUSLY on the very marker it was
+  # written for: backticked in prose (`NAME:`) AND bare at the start of a line, which is how a marker
+  # is actually written in the fenced example that defines it. Matching only the prose form meant a
+  # marker could be fully specified in a code block and stay invisible to the parity check.
+  local re='(`|^)[[:upper:]][[:upper:]-]{3,}:'
   local cset oset missing
   # `MARKER` itself is the generic prose word for the convention ("grep-able `MARKER:` prefixes"),
   # not the name of any marker — excluded, or every file discussing the convention self-reports.
