@@ -199,3 +199,28 @@ routing. Name any delegation in the run summary so it is not mistaken for a revi
 **The distinction that makes this work:** pending intent blocks **building**, not the **drafting**
 that produces the thing being approved. Conflating the two reads as safe and is not — it closes the
 front door instead of the build path.
+
+### Leave evidence of the read — the `READ-RECEIPT` marker
+
+Whichever branch above is taken, the resolution just performed is **the** read of the record, and it
+must not dissolve into this pass's context. On branches (c), (d) and (e) — the ones that resolve to a
+real note — write the receipt into the dispatch brief, shape per the contract's
+[structured-lanes](../../jarvis-agency-jira-contract/reference/structured-lanes.md):
+
+```
+READ-RECEIPT: {vault-note-path}@{review-state} · {ISSUE}#{comment-id}
+              · "{verbatim quote, <=15 words}" · run-id={id} · ts={iso}
+```
+
+Quote **verbatim from the note just opened** — not from an earlier turn's summary, not from a
+`## Requirements Brief` orientation comment (that is a pointer; the note wins), and never from
+memory. A quote reproduced from memory is the failure this records, wearing the costume of the fix.
+
+On branch (a) there is nothing to cite and on (b) no note exists, so no receipt is written; note the
+branch in the run summary as today. A missing receipt where one was due is a **provenance gap to
+surface** in the run summary — it is not a bounce, does not increment the round count, and never
+blocks the drafting path. The receipt reports the gate's decision; it does not add a decision.
+
+Because the receipt rides in the brief, every downstream producer inherits it unedited — a producer
+that restated the rule locally would be the copy that survives the next central fix and keeps
+misbehaving.

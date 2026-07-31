@@ -347,3 +347,39 @@ that exists and is executable (a rename or a lost `+x` silently disarms a hook w
 green). It ships adversarially tested — unwiring the hook reproduces the original failure and names
 `CLAUDE.md:28` and `:152` by line. Deliberately narrow: it resolves `hooks/*.sh` references, not
 arbitrary shell, so a hook invoking something exotic is out of its reach.
+
+---
+
+### 2026-07-31 — The one failure class the loop could not learn from
+
+**What happened.** A day of agency runs went wrong the same way repeatedly: the agents did not check
+the vault or Jira, did not investigate, and rushed. Each time the session said it had learned; each
+time the next run repeated it. The reason it recurred is structural, not attitudinal.
+
+**Root cause, in three layers.** (1) An in-session "I've learned that" writes nothing. The only
+durable paths are retro's Jira lanes and a platform-repo skill edit; a subagent's context is
+discarded by design at the end of its dispatch, so the next dispatch boots from byte-identical
+instructions. (2) The three RC verifiers inspect the **diff** — correctness, coverage, attack
+surface. None asks *did you read the record*. So a skipped read produced no `VERDICT: FAIL`, no
+bounce, no round — and retro classifies bounce causes **from verdict lanes**, meaning the class was
+structurally invisible to the learning organ. It was the one failure the loop could not learn from,
+because it left no trace to learn from. (3) `watch-cost` guards spending too MUCH; nothing guarded
+spending too LITTLE. Skipping investigation is faster, cheaper, and produced no signal — the only
+pressure on that axis pointed toward rushing.
+
+**Rule.** An unobservable step is unenforceable and, worse, unlearnable. Before adding a rule about
+how an agent should behave, ask what artifact the behaviour leaves behind — and if the answer is
+"none", the rule is decoration. Make the step leave evidence first; gate on the evidence second.
+Corollary for evidence design: **prefer a falsifiable artifact to an assertion.** "I read it" is
+unfalsifiable; a verbatim quote from the source is not, because a later pass can re-fetch and diff.
+
+**Mechanically checkable → built, in two layers.** `hooks/dispatch-guard.sh` (PreToolUse) refuses or
+warns on a dispatch brief that names an issue key without a `READ-RECEIPT` — a control **outside**
+agent discretion, which every gate in the agency loop except the human GA signature is not. The
+contract defines the receipt once (`structured-lanes.md`), the orchestrator writes it at the intent
+gate it was already resolving, producers inherit it via the brief, and retro's Conformance checklist
+picks it up automatically because that checklist is derived at run time rather than hand-copied.
+Check 38 asserts the contract's marker vocabulary reaches its consumer. **Honest limits:** the hook
+sees dispatch briefs, not the orchestrator's own reasoning; presence and shape are checkable, but
+faithfulness of the quote is only checkable where the source can be re-fetched; and it detects an
+absent read, never a shallow one.

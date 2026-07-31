@@ -263,6 +263,17 @@
         "(2) The comment ends with a final plain-language 'Founder summary:' paragraph — what the check was meant to do, what was found, and what happens next, in non-technical language without jargon, run-ids, or severity codes",
         "(2b) The summary never replaces the technical content above it and never softens the FAIL — it states plainly what is broken; the VERDICT token remains the gate key"
       ]
+    },
+    {
+      "id": "jarvis-agency-jira-contract-024-read-receipt-shape-and-permitted-cases",
+      "query": "An orchestrator pass is at the Backlog intent gate for a story whose owning vault note resolves and reads 'review: founder-confirmed'. It is about to dispatch a producer. Separately, a second unit's requirement note is 'pending' with no scope note yet, and a third unit has no owning vault note at all. What provenance does each dispatch carry, and does any of the three get blocked by that requirement?",
+      "expected_behavior": [
+        "The first dispatch carries a READ-RECEIPT marker in the brief: the vault-note path with its review-state, the issue and comment reference, a VERBATIM quote (<=15 words) from the note just opened, plus run-id and timestamp",
+        "The quote must be copied verbatim from the note just read — never from memory, an earlier turn's summary, or a '## Requirements Brief' orientation comment, which is a pointer whose note wins",
+        "The second unit (requirement pending, drafting outstanding) still dispatches intake exactly as today — the receipt records the pending state and drafting is never blocked; blocking here would stall the front door",
+        "The third unit (no owning note) writes no receipt because there is nothing to cite, and takes the existing invalid-intent branch: route back for a note, queue, surface, move on",
+        "A missing receipt where one was due is a provenance gap surfaced in the run summary — explicitly NOT a bounce, not a round increment, and not a new gate; it reports the decision the intent gate already made"
+      ]
     }
   ]
 }
