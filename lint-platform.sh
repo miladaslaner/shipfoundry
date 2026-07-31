@@ -1524,6 +1524,56 @@ check_dist_content() {
 }
 
 # =============================================================================
+# CHECK 37 — A documented hook is actually wired  (FAIL)
+# CLAUDE.md has claimed since the initial public release that a Stop hook auto-runs the gate, while
+# .claude/settings.json sat at `{}` — the hook body was stripped by the public-release scrub and
+# nothing compared the claim against the file. So the repo documented a control it did not have,
+# and the only way to notice was reading both files side by side. That is the memory-enforced shape
+# this platform condemns, applied to the platform's own safety net. Two directions, because both
+# have failed: a doc that PROMISES a Stop hook must find one wired, and a WIRED hook must point at
+# a file that exists and is executable (a rename or a chmod silently disarms it while lint stays
+# green). Deliberately narrow: it resolves `hooks/*.sh` references, not arbitrary shell.
+check_documented_hooks() {
+  section "37. Documented hooks are wired and executable"
+  local settings="$ROOT/.claude/settings.json" probs=0
+  if ! command -v jq >/dev/null 2>&1; then
+    pass "skipped — jq not installed (cannot parse settings.json)"; return
+  fi
+  if [ -f "$settings" ] && ! jq -e . "$settings" >/dev/null 2>&1; then
+    fail ".claude/settings.json is not valid JSON — every setting in it is silently ignored"
+    return
+  fi
+  local wired="" cmds=""
+  if [ -f "$settings" ]; then
+    wired=$(jq -r '.hooks // {} | keys[]?' "$settings" 2>/dev/null)
+    cmds=$(jq -r '.hooks // {} | to_entries[] | .value[]? | .hooks[]? | select(.type=="command") | .command' "$settings" 2>/dev/null)
+  fi
+  local ref f hit ln
+  local IFS=$'\n'
+  # (a) a wired hook must resolve to an executable script
+  for ref in $(printf '%s\n' "$cmds" | grep -oE 'hooks/[A-Za-z0-9_.-]+\.sh' | sort -u); do
+    [ -n "$ref" ] || continue
+    if [ ! -x "$ROOT/$ref" ]; then
+      fail ".claude/settings.json wires a hook to $ref, which is missing or not executable"
+      probs=$((probs+1))
+    fi
+  done
+  # (b) a doc promising a Stop hook must find one wired
+  for f in $(git -C "$ROOT" ls-files '*.md'); do
+    [ -f "$ROOT/$f" ] || continue
+    for hit in $(grep -noiE 'stop hook (also )?(runs|auto-runs)|stop hook →' "$ROOT/$f" 2>/dev/null); do
+      ln="${hit%%:*}"
+      case "$wired" in
+        *Stop*) ;;
+        *) fail "$f:$ln: promises a Stop hook runs automatically, but .claude/settings.json wires no Stop hook"
+           probs=$((probs+1)) ;;
+      esac
+    done
+  done
+  [ "$probs" -eq 0 ] && pass "documented hooks are wired; every wired hook script exists and is executable"
+}
+
+# =============================================================================
 # CHECK 32 — Stated check-count parity  (FAIL)
 # Count drift has recurred THREE times, and at the moment this check was written FOUR different
 # live values were in the tree at once: README/CLAUDE said 30, governance-model said 30,
@@ -1880,6 +1930,7 @@ check_internal_untracked
 check_confidential_docs
 check_private_doc_prose
 check_dist_content
+check_documented_hooks
 
 section "Summary"
 printf '  %s%d FAIL%s   %s%d WARN%s\n' "$([ "$FAILS" -gt 0 ] && echo "$R" || echo "$G")" "$FAILS" "$X" \
